@@ -1,0 +1,20 @@
+# .NET Core
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+[Tt]emp/
+[Oo]bj/
+[Bb]in/
+
+# Environment Variables
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db

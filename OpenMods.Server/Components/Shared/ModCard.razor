@@ -1,0 +1,38 @@
+@using OpenMods.Server.Models
+@inject NavigationManager NavigationManager
+
+<div class="mod-card rounded-xl overflow-hidden p-4 group cursor-pointer" @onclick='() => NavigationManager.NavigateTo($"mod/{Mod.Id}")'>
+    <div class="h-40 rounded-lg bg-cover bg-center mb-4 relative" style="background-image: url('@Mod.ImageUrl')">
+        <div class="absolute top-2 right-2 flex gap-2">
+            <span class="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded">@LatestVersion</span>
+        </div>
+    </div>
+    <h3 class="text-white font-bold text-lg mb-1 group-hover:text-primary transition-colors">@Mod.Name</h3>
+    <div class="flex items-center gap-2 mb-3">
+        <div class="size-5 rounded-full bg-cover" style="background-image: url('@Mod.Developer?.AvatarUrl')"></div>
+        <span class="text-sm text-slate-400">@@@Mod.Developer?.GitHubUsername</span>
+    </div>
+    <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 mt-auto">
+        <div class="flex items-center gap-3">
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs text-yellow-500">star</span> @FormatCount(Mod.Stars)</span>
+            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">account_tree</span> @FormatCount(Mod.Forks)</span>
+        </div>
+        <span>@TimeAgo(Mod.UpdatedAt)</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Mod Mod { get; set; } = new();
+
+    private string LatestVersion => Mod.Releases.MaxBy(r => r.ReleasedAt)?.Version ?? "v0.0.0";
+
+    private string FormatCount(int count) => count >= 1000 ? $"{(count / 1000.0):F1}k" : count.ToString();
+
+    private string TimeAgo(DateTime dateTime)
+    {
+        var span = DateTime.UtcNow - dateTime;
+        if (span.TotalDays > 1) return $"{(int)span.TotalDays}d ago";
+        if (span.TotalHours > 1) return $"{(int)span.TotalHours}h ago";
+        return "now";
+    }
+}

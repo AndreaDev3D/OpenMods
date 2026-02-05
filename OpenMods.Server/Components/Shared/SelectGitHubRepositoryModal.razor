@@ -1,0 +1,100 @@
+@using OpenMods.Server.Models
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-display">
+        <div class="bg-white dark:bg-[#161d2b] w-full max-w-[640px] rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-start">
+                <div class="flex flex-col gap-1">
+                    <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Sync New Repository</h2>
+                    <p class="text-slate-500 dark:text-[#92a4c9] text-sm">Select a public repository to begin the distribution process.</p>
+                </div>
+                <button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500 dark:text-slate-400" @onclick="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="px-6 py-4 bg-slate-50/50 dark:bg-[#1a2336] border-b border-slate-200 dark:border-slate-800">
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">search</span>
+                    </div>
+                    <input class="w-full bg-white dark:bg-[#232f48] border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white" placeholder="Search your repositories..." type="text" />
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                @foreach (var repo in _mockRepos)
+                {
+                    <div class="flex items-center gap-4 px-6 py-5 hover:bg-slate-50 dark:hover:bg-[#1d273b] transition-colors border-b border-slate-100 dark:border-slate-800/50 group">
+                        <div class="size-12 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary shrink-0">
+                            <span class="material-symbols-outlined">@(repo.Icon)</span>
+                        </div>
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base font-semibold text-slate-900 dark:text-white truncate">@repo.Name</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">Public</span>
+                            </div>
+                            <p class="text-sm text-slate-500 dark:text-[#92a4c9] line-clamp-1 mt-0.5">@repo.Description</p>
+                            <div class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px] text-amber-500 fill-current">star</span>
+                                    <span>@repo.Stars</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full @(repo.LangColor)"></span>
+                                    <span>@repo.Language</span>
+                                </div>
+                                <span>Updated @repo.LastUpdated</span>
+                            </div>
+                        </div>
+                        <button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-primary/20 shrink-0" @onclick="() => OnRepoSelected.InvokeAsync(repo.Name)">
+                            Select
+                        </button>
+                    </div>
+                }
+            </div>
+            <div class="p-4 bg-slate-50 dark:bg-[#1a2336] border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <p class="text-xs text-slate-500 dark:text-[#92a4c9]">
+                    Showing @_mockRepos.Count of 28 public repositories
+                </p>
+                <div class="flex gap-2">
+                    <button class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#232f48] rounded-lg transition-colors">
+                        Refresh List
+                    </button>
+                    <button class="px-4 py-2 text-sm font-medium bg-slate-200 dark:bg-[#232f48] text-slate-800 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-[#2e3d5c] transition-colors">
+                        Load More
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback<string> OnRepoSelected { get; set; }
+
+    private void Close()
+    {
+        IsOpen = false;
+        IsOpenChanged.InvokeAsync(false);
+    }
+
+    private List<RepoItem> _mockRepos = new()
+    {
+        new RepoItem { Name = "awesome-react-mod", Description = "A decentralized modding framework for high-performance open-source games.", Stars = "1,240", Language = "TypeScript", LangColor = "bg-[#3178c6]", LastUpdated = "2 days ago", Icon = "account_tree" },
+        new RepoItem { Name = "shader-pack-ultra", Description = "High-performance ray-tracing shaders for voxel engines using GLSL.", Stars = "856", Language = "JavaScript", LangColor = "bg-[#f1e05a]", LastUpdated = "5 hours ago", Icon = "blur_on" },
+        new RepoItem { Name = "rust-game-engine", Description = "Experimental ECS-based game engine written from scratch in Rust.", Stars = "3.2k", Language = "Rust", LangColor = "bg-[#dea584]", LastUpdated = "1 week ago", Icon = "settings_input_component" }
+    };
+
+    private class RepoItem
+    {
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Stars { get; set; } = "";
+        public string Language { get; set; } = "";
+        public string LangColor { get; set; } = "";
+        public string LastUpdated { get; set; } = "";
+        public string Icon { get; set; } = "";
+    }
+}

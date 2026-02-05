@@ -1,0 +1,212 @@
+@page "/dashboard"
+@layout OpenMods.Server.Components.Layout.DashboardLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<header class="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-4 flex-1 max-w-xl">
+        <div class="relative w-full">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+            <input class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-card-dark border-none rounded-lg text-sm focus:ring-2 focus:ring-primary" placeholder="Search OpenMods repositories..." type="text" />
+        </div>
+    </div>
+    <div class="flex items-center gap-4">
+        <button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-card-dark rounded-full relative">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
+        </button>
+        <button class="bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:brightness-110 shadow-lg shadow-primary/20" @onclick="() => showRepoModal = true">
+            <span class="material-symbols-outlined text-sm">sync</span>
+            Sync New Repository
+        </button>
+    </div>
+</header>
+
+<SelectGitHubRepositoryModal @bind-IsOpen="showRepoModal" OnRepoSelected="HandleRepoSelected" />
+<ConfigureMetadataModal @bind-IsOpen="showMetadataModal" SelectedRepo="@selectedRepo" OnBack="BackToRepoSelect" OnPublish="HandlePublish" />
+
+<div class="p-8 space-y-8">
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-card-dark p-6 rounded-xl border border-slate-200 dark:border-border-dark">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-sm font-medium text-slate-500">Total Downloads</p>
+                <span class="material-symbols-outlined text-primary">download</span>
+            </div>
+            <h3 class="text-3xl font-bold text-slate-900 dark:text-white">142.8k</h3>
+            <p class="text-xs text-green-500 mt-2 flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">trending_up</span>
+                +12.5% from last month
+            </p>
+        </div>
+        <div class="bg-white dark:bg-card-dark p-6 rounded-xl border border-slate-200 dark:border-border-dark">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-sm font-medium text-slate-500">Active Mods</p>
+                <span class="material-symbols-outlined text-primary">extension</span>
+            </div>
+            <h3 class="text-3xl font-bold text-slate-900 dark:text-white">12</h3>
+            <p class="text-xs text-slate-400 mt-2">All OpenMods systems functional</p>
+        </div>
+        <div class="bg-white dark:bg-card-dark p-6 rounded-xl border border-slate-200 dark:border-border-dark">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-sm font-medium text-slate-500">Est. Revenue</p>
+                <span class="material-symbols-outlined text-primary">currency_bitcoin</span>
+            </div>
+            <h3 class="text-3xl font-bold text-slate-900 dark:text-white">ETH 2.84</h3>
+            <p class="text-xs text-green-500 mt-2 flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">trending_up</span>
+                +4.2% from last month
+            </p>
+        </div>
+    </section>
+
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-border-dark pb-4">
+        <div>
+            <h2 class="text-2xl font-bold">My Repositories</h2>
+            <p class="text-slate-500 text-sm">Manage and distribute your synced GitHub projects on OpenMods.</p>
+        </div>
+        <div class="flex gap-2">
+            <button class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-100 dark:bg-card-dark border border-slate-200 dark:border-border-dark">All</button>
+            <button class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-500">Live</button>
+            <button class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-500">Draft</button>
+        </div>
+    </div>
+
+    <section class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+        @foreach (var repo in _repos)
+        {
+            <div class="bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden flex flex-col">
+                <div class="p-6 flex-1">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-slate-900 dark:bg-slate-800 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-white">@(repo.Icon)</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-slate-900 dark:text-white">@repo.Name</h4>
+                                <p class="text-xs text-slate-500 font-mono">@repo.Url</p>
+                            </div>
+                        </div>
+                        <span class="bg-@(repo.StatusColor)-500/10 text-@(repo.StatusColor)-500 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">@repo.Status</span>
+                    </div>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 mb-4">
+                        @repo.Description
+                    </p>
+                    <div class="flex items-center gap-6 text-xs text-slate-500 font-medium">
+                        <div class="flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">star</span>
+                            @repo.Stars
+                        </div>
+                        <div class="flex items-center gap-1.5 @(repo.IsUpdatePending ? "text-amber-500" : "")">
+                            <span class="material-symbols-outlined text-sm">history</span>
+                            @repo.Version @(repo.IsUpdatePending ? "(Local)" : "")
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">schedule</span>
+                            @repo.LastSync
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
+                    <button class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                        <span class="material-symbols-outlined text-sm">visibility</span>
+                        View Page
+                    </button>
+                    @if (repo.IsUpdatePending)
+                    {
+                        <button class="bg-primary text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-2 hover:brightness-110 transition-all">
+                            <span class="material-symbols-outlined text-xs">publish</span>
+                            Sync & Deploy
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark px-3 py-1.5 rounded text-xs font-bold flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
+                            <span class="material-symbols-outlined text-xs">refresh</span>
+                            Refresh from GitHub
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="bg-white dark:bg-card-dark rounded-xl border border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex flex-col justify-center items-center p-8 text-center min-h-[280px]">
+            <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-slate-400 text-3xl">add_to_drive</span>
+            </div>
+            <h4 class="font-bold text-lg mb-2">Ready for your next mod?</h4>
+            <p class="text-sm text-slate-500 mb-6 max-w-[200px]">Connect more GitHub repositories to expand your OpenMods portfolio.</p>
+            <button class="bg-slate-900 dark:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
+                Explore Repositories
+            </button>
+        </div>
+    </section>
+</div>
+
+@code {
+    private bool showRepoModal;
+    private bool showMetadataModal;
+    private string selectedRepo = "";
+    private List<RepoItem> _repos = new();
+
+    private void HandleRepoSelected(string repoName)
+    {
+        selectedRepo = repoName;
+        showRepoModal = false;
+        showMetadataModal = true;
+    }
+
+    private void BackToRepoSelect()
+    {
+        showMetadataModal = false;
+        showRepoModal = true;
+    }
+
+    private void HandlePublish()
+    {
+        showMetadataModal = false;
+        // In reality, would save to DB here
+    }
+
+    protected override void OnInitialized()
+    {
+        _repos = new List<RepoItem>
+        {
+            new RepoItem { 
+                Name = "enhanced-textures-v2", 
+                Url = "github.com/octo/enhanced-textures", 
+                Description = "High-resolution texture pack for popular sandbox games. Features PBR materials and custom shaders.",
+                Icon = "folder",
+                Status = "Live",
+                StatusColor = "green",
+                Stars = "1.2k",
+                Version = "v3.2.1",
+                LastSync = "2 days ago"
+            },
+            new RepoItem { 
+                Name = "performance-optimizer", 
+                Url = "github.com/octo/perf-opt", 
+                Description = "Memory management overhaul reducing heap usage by 30%. Supports multicore processing.",
+                Icon = "bolt",
+                Status = "Update Pending",
+                StatusColor = "amber",
+                Stars = "452",
+                Version = "v1.0.4",
+                LastSync = "4 hours ago",
+                IsUpdatePending = true
+            }
+        };
+    }
+
+    private class RepoItem
+    {
+        public string Name { get; set; } = "";
+        public string Url { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string StatusColor { get; set; } = "";
+        public string Stars { get; set; } = "";
+        public string Version { get; set; } = "";
+        public string LastSync { get; set; } = "";
+        public bool IsUpdatePending { get; set; }
+    }
+}

@@ -1,0 +1,128 @@
+@using OpenMods.Server.Models
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-display overflow-y-auto">
+        <div class="bg-white dark:bg-[#161e2e] w-full max-w-4xl rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
+            <div class="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex flex-wrap justify-between items-start gap-4">
+                <div class="space-y-1">
+                    <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Configure OpenMods Metadata</h1>
+                    <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                        <span class="material-symbols-outlined text-sm">link</span>
+                        <p class="text-sm font-normal">github.com/@SelectedRepo</p>
+                    </div>
+                </div>
+                <button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" @onclick="Close">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                    Cancel
+                </button>
+            </div>
+            <div class="p-6 md:p-8 space-y-10">
+                <section>
+                    <label class="block text-sm font-bold text-slate-900 dark:text-slate-200 mb-4 uppercase tracking-wider">Select Primary Category</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        @foreach (var cat in new[] { ("Gameplay", "sports_esports"), ("UI / UX", "dashboard_customize"), ("Assets", "texture"), ("Utilities", "build_circle") })
+                        {
+                            <label class="relative flex flex-col items-center justify-center p-6 rounded-xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 cursor-pointer hover:border-primary/50 group transition-all @(SelectedCategory == cat.Item1 ? "border-primary bg-primary/5" : "")">
+                                <input class="hidden" name="category" type="radio" value="@cat.Item1" checked="@(SelectedCategory == cat.Item1)" @onchange="() => SelectedCategory = cat.Item1" />
+                                <span class="material-symbols-outlined text-3xl mb-2 text-slate-400 group-hover:text-primary transition-colors @(SelectedCategory == cat.Item1 ? "text-primary" : "")">@cat.Item2</span>
+                                <span class="text-sm font-bold text-slate-600 dark:text-slate-300">@cat.Item1</span>
+                            </label>
+                        }
+                    </div>
+                </section>
+                <section>
+                    <label class="block text-sm font-bold text-slate-900 dark:text-slate-200 mb-4 uppercase tracking-wider">Search Tags</label>
+                    <div class="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                        @foreach (var tag in _tags)
+                        {
+                            <div class="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded text-sm font-medium border border-primary/20">
+                                @tag <span class="material-symbols-outlined text-xs cursor-pointer" @onclick="() => _tags.Remove(tag)">close</span>
+                            </div>
+                        }
+                        <input class="flex-1 min-w-[200px] bg-transparent border-none focus:ring-0 text-sm py-1 placeholder:text-slate-500 text-slate-900 dark:text-white" placeholder="Add tags (e.g., survival, realism)..." type="text" @onkeydown="HandleTagInput" />
+                    </div>
+                    <p class="mt-2 text-xs text-slate-500">Tags help users find your mod. Press Enter to add.</p>
+                </section>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="p-5 rounded-xl bg-primary/5 border border-primary/10 flex gap-4">
+                        <div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-primary">description</span>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-slate-200">Description Sync</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                                Your <code class="bg-primary/10 px-1 rounded">README.md</code> will be automatically synced as the main mod page. 
+                                Markdown and images are supported.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="p-5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex gap-4">
+                        <div class="size-10 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-slate-500">package_2</span>
+                        </div>
+                        <div class="overflow-hidden">
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-slate-200">Latest Release</h4>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs font-mono text-primary font-bold">v1.4.2</span>
+                                <span class="text-[10px] bg-emerald-500/10 text-emerald-500 px-1.5 rounded-full border border-emerald-500/20">Stable</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500 mt-1 truncate">n-shaders-final-build.zip</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-4 flex items-start gap-3">
+                    <div class="flex items-center h-5">
+                        <input class="size-4 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary/20 bg-transparent" id="confirm" type="checkbox" @bind="IsConfirmed" />
+                    </div>
+                    <label class="text-xs text-slate-600 dark:text-slate-400 leading-tight" for="confirm">
+                        I confirm that this repository contains open-source code and follows the 
+                        <a class="text-primary hover:underline" href="#">OpenMods Distribution Guidelines</a>.
+                    </label>
+                </div>
+            </div>
+            <div class="p-6 md:p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <button class="px-6 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" @onclick="Back">
+                    Back to Step 1
+                </button>
+                <div class="flex gap-3">
+                    <button class="px-6 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 text-sm font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        Save as Draft
+                    </button>
+                    <button class="px-8 py-2.5 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all" @onclick="Publish">
+                        Publish to OpenMods
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public string SelectedRepo { get; set; } = "";
+    [Parameter] public EventCallback OnBack { get; set; }
+    [Parameter] public EventCallback OnPublish { get; set; }
+
+    private string SelectedCategory { get; set; } = "Gameplay";
+    private List<string> _tags = new() { "Optimization", "Graphics" };
+    private bool IsConfirmed { get; set; } = true;
+
+    private void Close()
+    {
+        IsOpen = false;
+        IsOpenChanged.InvokeAsync(false);
+    }
+
+    private void Back() => OnBack.InvokeAsync();
+    private void Publish() => OnPublish.InvokeAsync();
+
+    private void HandleTagInput(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            // Logic to add tag would go here, omitting for brevity in mock
+        }
+    }
+}

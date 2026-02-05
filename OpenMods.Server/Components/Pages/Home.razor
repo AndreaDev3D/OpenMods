@@ -1,0 +1,195 @@
+﻿@page "/"
+@using Microsoft.JSInterop
+
+<PageTitle>OpenMods | Decentralized Modding Layer</PageTitle>
+
+<section class="relative overflow-hidden pt-20 pb-16 lg:pt-32 lg:pb-24">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-600/10 blur-[100px] rounded-full"></div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold mb-6">
+            <span class="material-symbols-outlined text-xs">verified</span>
+            <span>v2.0 LIVE: FULL GITHUB INTEGRATION</span>
+        </div>
+        <h1 class="text-5xl md:text-7xl font-bold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400 leading-tight">
+            The Open-Source <br />Modding Layer
+        </h1>
+        <p class="max-w-2xl mx-auto text-lg md:text-xl text-slate-400 mb-10 font-light">
+            Distribute, discover, and version-control your game mods using GitHub.
+            Decentralized, transparent, and built entirely for developers.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <AuthorizeView>
+                <Authorized>
+                    <a href="/dashboard" class="w-full sm:w-auto px-8 py-4 bg-primary text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        Go to Dashboard
+                    </a>
+                </Authorized>
+                <NotAuthorized>
+                    <button @onclick="HandleLogin" class="w-full sm:w-auto px-8 py-4 bg-primary text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">
+                        <span class="material-symbols-outlined">link</span>
+                        Connect with GitHub
+                    </button>
+                </NotAuthorized>
+            </AuthorizeView>
+            <a href="explore" class="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition-colors">
+                <span class="material-symbols-outlined">explore</span>
+                Browse All Mods
+            </a>
+        </div>
+        <div class="mt-16 max-w-3xl mx-auto">
+            <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-primary/50 to-blue-600/50 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+                <div class="relative bg-[#1a2233] border border-white/10 rounded-2xl flex items-center p-2 shadow-2xl">
+                    <span class="material-symbols-outlined text-slate-400 ml-4">search</span>
+                    <input class="w-full bg-transparent border-none focus:ring-0 text-white px-4 py-3 placeholder:text-slate-500" placeholder="Search mods by name, author, or repository..." type="text" />
+                    <div class="hidden sm:flex items-center gap-1.5 bg-slate-800/50 border border-white/10 rounded-lg px-2 py-1 mr-2">
+                        <span class="text-xs text-slate-400 font-mono">⌘K</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="border-y border-white/5 bg-black/20">
+    <div class="max-w-7xl mx-auto px-4 py-12 flex flex-wrap justify-around gap-8 text-center">
+        <div>
+            <div class="text-3xl font-bold text-white">420K+</div>
+            <div class="text-xs text-slate-500 uppercase tracking-widest mt-1">Total Downloads</div>
+        </div>
+        <div>
+            <div class="text-3xl font-bold text-white">12.5K</div>
+            <div class="text-xs text-slate-500 uppercase tracking-widest mt-1">Active Projects</div>
+        </div>
+        <div>
+            <div class="text-3xl font-bold text-white">100%</div>
+            <div class="text-xs text-slate-500 uppercase tracking-widest mt-1">Open Source</div>
+        </div>
+        <div>
+            <div class="text-3xl font-bold text-white">0%</div>
+            <div class="text-xs text-slate-500 uppercase tracking-widest mt-1">Platform Fees</div>
+        </div>
+    </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8">
+    <div class="flex items-end justify-between mb-10">
+        <div>
+            <h2 class="text-3xl font-bold text-white mb-2">Trending Mods</h2>
+            <p class="text-slate-400">The most popular repositories from the GitHub ecosystem this week.</p>
+        </div>
+        <a class="text-primary text-sm font-bold flex items-center gap-1 hover:underline" href="explore">
+            View leaderboard <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        @foreach (var mod in _trendingMods)
+        {
+            <ModCard Mod="mod" />
+        }
+    </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8 bg-white/5 rounded-[2rem] mb-20">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
+        <div class="space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto md:mx-0">
+                <span class="material-symbols-outlined">hub</span>
+            </div>
+            <h3 class="text-xl font-bold text-white">GitHub Native</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+                We don't host your files. OpenMods acts as a discovery and delivery layer directly on top of GitHub repositories and releases.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto md:mx-0">
+                <span class="material-symbols-outlined">security</span>
+            </div>
+            <h3 class="text-xl font-bold text-white">Trustless Distribution</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+                Verify checksums directly from GitHub source. No middle-man modification possible. Pure, transparent distribution.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto md:mx-0">
+                <span class="material-symbols-outlined">payments</span>
+            </div>
+            <h3 class="text-xl font-bold text-white">Zero Fee Platform</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+                OpenMods is 100% open-source and free to use. Built for developers by developers. Support authors directly via GitHub Sponsors.
+            </p>
+        </div>
+    </div>
+</section>
+
+@inject Supabase.Client SupabaseClient
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@code {
+    private List<Mod> _trendingMods = new();
+
+    private async Task HandleLogin()
+    {
+        var result = await SupabaseClient.Auth.SignIn(Supabase.Gotrue.Constants.Provider.Github, new Supabase.Gotrue.SignInOptions
+        {
+            RedirectTo = Nav.BaseUri + "auth/callback",
+            FlowType = Supabase.Gotrue.Constants.OAuthFlowType.PKCE
+        });
+        
+        if (result.Uri != null)
+        {
+            // Store PKCE verifier for the callback
+            await JS.InvokeVoidAsync("sessionStorage.setItem", "supabase_pkce_verifier", result.PKCEVerifier);
+            Nav.NavigateTo(result.Uri.ToString(), true);
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Mock data for initial implementation
+        _trendingMods = new List<Mod>
+        {
+            new Mod { 
+                Name = "Nexus Core Shader", 
+                Stars = 2400, 
+                Forks = 412, 
+                UpdatedAt = DateTime.UtcNow.AddHours(-2),
+                ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuAz3qJBWNoi5bQOTAQTm8aMsCZoI7w1yDJhYpTt4BZmhfSBILiFL0-3-pxCbXlZprOkkCQYEC5MW-ULMMx1B1HxB5jsHYTw-CB0stX9nEnGuVh0kb81pNnHmCrZkK46LAmqyccF4uHoAb_xE9DHoBZZkXrQFjGGf3lAusqkKval9G1Q4OKB1B3zRphHc4TNpY_P3cPAXLStv3UmA0F-qj3PYdde7QV2y-BV9Sq29Ipf4z8GWUZ5VJcDyjY6RtyBW9jhluNaRujFF4PM",
+                Developer = new Developer { GitHubUsername = "shadow_code", AvatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuDO5mJNjKtdCBq4IVkTBEoMW68sIJC-5BRnV72eb1RAvEi-ReF8M4K7CARIDe8U7BpBCxl4pBnnrqB0_5dWzVlD6zpY-Ogm3tO3EOCq9mmfLJ81QakTO3xoErpv9PwTZYUjiQ2LQ-grggmxTGN-XFSswgwxM2o8TXqDNEVnQCHFaqErrMcvGOeRizhjvyVPXcGyJHZNHaf_Jt2079q_Q0QwtPxImzhn_lsDdop-_-Run8Uw7uWekDfYF8SIYv37elWVbWRKuQJKakOE" },
+                Releases = new List<Release> { new Release { Version = "V1.4.2", ReleasedAt = DateTime.UtcNow.AddDays(-5) } }
+            },
+            new Mod { 
+                Name = "OptiBoost Engine", 
+                Stars = 1800, 
+                Forks = 128, 
+                UpdatedAt = DateTime.UtcNow.AddHours(-5),
+                ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBRVakDvFxP_jyJmk2mWvim2eqrT9980fSNfFaDguDFxFHB7K3dMD1mfGLcqADNo-FgSKCPUQ5INFrHc15x6lh8H5Y1w4Q6bQWgBIl0xayBmBrjOShxj5Fd7SH_kTcI5Hme4V_NesOmhAZyuPjpy2Y-4mUtbiR7MHGkNY1mfAJBlFiiT8quBmVqvRSWp463xlFmCvs3thPfQnZlQIrKD9omxKTiXU9wd4YCT7bBWHNADa56gQXfoXSJHgBDi4QCdhMn3wxVvKNlbeR0",
+                Developer = new Developer { GitHubUsername = "performance_god", AvatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBIFmNp8BeomelhmUGy2lPkm-Vm9lL1qPvoKMix2pSn5HmqPF5rhUdcnkH44kqM1ypUdBIQEj34Q4Zna1JTmXmWq8kM2XO7uccivRbhiit0PiiaeZZErzxzYrybR6ebGGRYZ92iFHDxxEd29no2XL7d0BXWITJ0sIRWGjbIYS3YB55Ff-4bN_xA3gHe4woPtN38xi_oohjbxfecM3jyaSjyUfhUdXVuBv9W32ZyU1BWVgzTHA5NkyTmk9mRg1_VVZMQatfAxsnn7mjd" },
+                Releases = new List<Release> { new Release { Version = "V0.9-BETA", ReleasedAt = DateTime.UtcNow.AddDays(-10) } }
+            },
+            new Mod { 
+                Name = "FluidUI Kit", 
+                Stars = 3100, 
+                Forks = 890, 
+                UpdatedAt = DateTime.UtcNow.AddHours(-12),
+                ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuAaCMFLUC98M0uOnAz1Ji687DfVTS1ojrZDn1TRvmHp8e4lQgwR5lUBee3FLhDgr2_iZSCqISL2npyWgjUgkxcVhiWhNmf8gO8H_Fwyr97HDtu26RwsM4PMSx7Xb3SQjRwgOfWN-pik0h3_FXRJnRUEnW_-gCCjWCwGCWzjb_JNjiTnSBSiqAIiO_BT9KTg67hLGpisbH8BI5tabEQle0vGVEy4VqjsQONeEOwJOTQRPJZn4XTqbrDL7chgrjMf93ykaKsWPo5oiQO3",
+                Developer = new Developer { GitHubUsername = "interface_lab", AvatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuCuX8A-neq14MXmXRIYEq7iFmumurg6WMPHwEa6XP8Q8JHndmJ2vqUVu_-sYS9CCEoMm9d4qt9upaPhL8ECV97xDmZrPJnZd92H8T2ywDXKUoyEYICUs4hvOAjW2F0P2p565djSiaK3hDPh2XM-8VnOY6ZG9lkFwpWYAi2s2hMV2Hk34a061n76NhdDnHcPEKlwjfMYzXmYYQAMpf4wZP4H5phSpHupqSrGldAuCBMkTXtairwMu2fdYn-Hs1gutv0NEFqESRW5oDhL" },
+                Releases = new List<Release> { new Release { Version = "V2.0.0", ReleasedAt = DateTime.UtcNow.AddDays(-2) } }
+            },
+            new Mod { 
+                Name = "WorldGen++ API", 
+                Stars = 950, 
+                Forks = 56, 
+                UpdatedAt = DateTime.UtcNow.AddDays(-1),
+                ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBG-QSbhKOK5bpvzUwe_ScqDx7rChtXLuvz3zjlaOcl-fdqwztY8pWRYbjWRm1_H-rF8P11aBEMzD352OhG3RA00u11sxWltaRD3UiHYBA5ZebOdy6Hu5p2CabRQ4Q6Sg8OMDpfCqnPs5oYpEW15ipvYXRDhQC7QHZRftryOJuHxocfeyNcIiM4nkKMfPDDf_zqFSbkHtDK77o3GHqtqhHmRxNRlCQAwIUqi8UOj0R_ZIIiLZy_NKSedDDRvupczLxuwxVTPhyAOMCk",
+                Developer = new Developer { GitHubUsername = "terra_builder", AvatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBnW1Lbl1bu4xA7K9fLaqz7mmj1kPnC4ltBwU1cWnFL3gV2AeETFrB-u2lgS8FCztJsTftxGPncoPXex7PxxUwuW3RCK3gfCqUVcXO44lSX3sO5Q2hkdWY4LnBKiOBVIy48DmnWveuen6Rquw4hOV95EM1eKvfejkxbTR3oF07E24viejpT-qcXednrWi4sKxJREImn3JUbFg5xUX54Bph_7M7EIVn3ArgZyUr6D1Ey4ucNd9pydydPe_WF7XOmzeZ1nPtrUbIAdT2w" },
+                Releases = new List<Release> { new Release { Version = "V0.5.1", ReleasedAt = DateTime.UtcNow.AddDays(-20) } }
+            }
+        };
+    }
+}

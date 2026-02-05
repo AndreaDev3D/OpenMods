@@ -1,0 +1,74 @@
+@inherits LayoutComponentBase
+@using Microsoft.JSInterop
+
+<div class="flex h-screen overflow-hidden bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+    <aside class="w-64 flex-shrink-0 bg-white dark:bg-background-dark border-r border-slate-200 dark:border-border-dark flex flex-col">
+        <div class="p-6 flex items-center gap-3">
+            <a href="/" class="flex items-center gap-3">
+                <div class="bg-primary p-1.5 rounded-lg text-white">
+                    <span class="material-symbols-outlined block">deployed_code</span>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">OpenMods</h1>
+            </a>
+        </div>
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <NavLink class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-card-dark transition-colors" href="dashboard" Match="NavLinkMatch.All" ActiveClass="bg-primary/10 text-primary font-semibold">
+                <span class="material-symbols-outlined">inventory_2</span>
+                My Mods
+            </NavLink>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-card-dark transition-colors" href="#">
+                <span class="material-symbols-outlined">monitoring</span>
+                Analytics
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-card-dark transition-colors" href="#">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+                Payouts
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-card-dark transition-colors" href="#">
+                <span class="material-symbols-outlined">settings_input_component</span>
+                Integrations
+            </a>
+        </nav>
+        <div class="p-4 mt-auto border-t border-slate-200 dark:border-border-dark">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="bg-slate-100 dark:bg-card-dark rounded-xl p-4 border border-transparent dark:border-border-dark/50">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="h-8 w-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center overflow-hidden border border-white/10 shadow-sm flex-shrink-0">
+                                <img alt="User profile" src="@(context.User.FindFirst("avatar_url")?.Value ?? "https://lh3.googleusercontent.com/a/default-user")" />
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-bold truncate text-slate-900 dark:text-white">@context.User.Identity?.Name</p>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">OpenMods Developer</p>
+                            </div>
+                        </div>
+                        <button @onclick="HandleLogout" class="w-full text-xs font-bold py-2 bg-slate-200 dark:bg-border-dark text-slate-700 dark:text-slate-200 rounded-lg hover:opacity-80 transition-opacity">Log Out</button>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <div class="bg-slate-100 dark:bg-card-dark rounded-xl p-4 text-center">
+                        <p class="text-xs text-slate-500 mb-2">Not signed in</p>
+                        <a href="/" class="text-xs font-bold text-primary hover:underline">Reconnect</a>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </aside>
+
+@inject Supabase.Client SupabaseClient
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@code {
+    private async Task HandleLogout()
+    {
+        await JS.InvokeVoidAsync("setCookie", "supabase_session", "", -1);
+        await SupabaseClient.Auth.SignOut();
+        Nav.NavigateTo("/", true);
+    }
+}
+
+    <main class="flex-1 overflow-y-auto">
+        @Body
+    </main>
+</div>

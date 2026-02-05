@@ -1,0 +1,215 @@
+@page "/profile/{Username}"
+@using OpenMods.Server.Models
+
+<PageTitle>@Username - OpenMods Developer Profile</PageTitle>
+
+@if (_developer == null)
+{
+    <div class="flex items-center justify-center min-h-[60vh]">
+        <div class="animate-pulse text-slate-400">Loading profile...</div>
+    </div>
+}
+else
+{
+    <main class="px-4 lg:px-40 flex flex-1 justify-center py-8 font-display">
+        <div class="layout-content-container flex flex-col max-w-[1200px] flex-1">
+            <div class="flex flex-col gap-6 p-6 rounded-xl bg-white dark:bg-[#111722]/50 border border-slate-200 dark:border-[#232f48] mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start gap-6">
+                    <div class="flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-left">
+                        <div class="relative">
+                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-xl min-h-32 w-32 border-4 border-slate-100 dark:border-[#232f48]" style='background-image: url("@_developer.AvatarUrl");'></div>
+                            <div class="absolute -bottom-2 -right-2 bg-primary text-white p-1 rounded-full border-2 border-white dark:border-[#111722]">
+                                <span class="material-symbols-outlined text-sm block">verified</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center justify-center md:justify-start gap-2">
+                                <h1 class="text-slate-900 dark:text-white text-3xl font-bold leading-tight tracking-tight">@@@_developer.GitHubUsername</h1>
+                                <span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">OpenMods Core</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-[#92a4c9] text-base font-normal leading-relaxed max-w-xl">
+                                @_developer.Bio
+                            </p>
+                            <div class="flex flex-wrap justify-center md:justify-start items-center gap-4 mt-2">
+                                <div class="flex items-center gap-1.5 text-[#92a4c9] text-sm">
+                                    <span class="material-symbols-outlined text-base">location_on</span>
+                                    <span>@_developer.Location</span>
+                                </div>
+                                <a class="flex items-center gap-1.5 text-primary text-sm font-medium hover:underline" href="https://github.com/@_developer.GitHubUsername" target="_blank">
+                                    <span class="material-symbols-outlined text-base">link</span>
+                                    <span>github.com/@_developer.GitHubUsername</span>
+                                </a>
+                                <div class="flex items-center gap-1.5 text-[#92a4c9] text-sm">
+                                    <span class="material-symbols-outlined text-base">history</span>
+                                    <span>Joined @_developer.JoinedAt.ToString("MMM yyyy")</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex w-full md:w-auto gap-3">
+                        <button class="flex-1 md:flex-none flex min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-11 px-5 bg-slate-200 dark:bg-[#232f48] text-slate-900 dark:text-white text-sm font-bold transition-all hover:bg-slate-300 dark:hover:bg-[#2d3b5a]">
+                            <span class="truncate">Follow</span>
+                        </button>
+                        <button class="flex-1 md:flex-none flex min-w-[100px] cursor-pointer items-center justify-center rounded-lg h-11 px-5 bg-primary text-white text-sm font-bold transition-all hover:brightness-110 shadow-lg shadow-primary/20">
+                            <span class="truncate">Support</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-slate-200 dark:border-[#232f48]">
+                    <div class="flex flex-col gap-1 p-3 rounded-lg bg-slate-50 dark:bg-[#1a2333]/40 border border-slate-100 dark:border-[#232f48]/30">
+                        <p class="text-primary tracking-tight text-2xl font-bold leading-tight">@FormatCount(1200)</p>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-400 text-sm">star</span>
+                            <p class="text-slate-500 dark:text-[#92a4c9] text-xs font-medium uppercase tracking-wider">GitHub Stars</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 p-3 rounded-lg bg-slate-50 dark:bg-[#1a2333]/40 border border-slate-100 dark:border-[#232f48]/30">
+                        <p class="text-slate-900 dark:text-white tracking-tight text-2xl font-bold leading-tight">850</p>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-400 text-sm">group</span>
+                            <p class="text-slate-500 dark:text-[#92a4c9] text-xs font-medium uppercase tracking-wider">Followers</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 p-3 rounded-lg bg-slate-50 dark:bg-[#1a2333]/40 border border-slate-100 dark:border-[#232f48]/30">
+                        <p class="text-slate-900 dark:text-white tracking-tight text-2xl font-bold leading-tight">@_developer.Mods.Count</p>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-400 text-sm">package_2</span>
+                            <p class="text-slate-500 dark:text-[#92a4c9] text-xs font-medium uppercase tracking-wider">OpenMods Published</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 p-3 rounded-lg bg-slate-50 dark:bg-[#1a2333]/40 border border-slate-100 dark:border-[#232f48]/30">
+                        <p class="text-slate-900 dark:text-white tracking-tight text-2xl font-bold leading-tight">@FormatCount(52000)</p>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-400 text-sm">download</span>
+                            <p class="text-slate-500 dark:text-[#92a4c9] text-xs font-medium uppercase tracking-wider">Total Downloads</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-end border-b border-slate-200 dark:border-[#324467] mb-8">
+                <div class="flex gap-8">
+                    <button class="flex flex-col items-center justify-center border-b-[3px] border-primary text-slate-900 dark:text-white pb-3 pt-4 px-2 group">
+                        <p class="text-sm font-bold leading-normal tracking-wide">Published Mods</p>
+                    </button>
+                    <button class="flex flex-col items-center justify-center border-b-[3px] border-transparent text-[#92a4c9] pb-3 pt-4 px-2 hover:text-white hover:border-[#324467] transition-all">
+                        <p class="text-sm font-bold leading-normal tracking-wide">Activity Feed</p>
+                    </button>
+                </div>
+                <div class="pb-3 hidden md:flex items-center gap-2 text-slate-500 text-xs">
+                    <span class="material-symbols-outlined text-sm">sync</span>
+                    <span>Last synced with GitHub: 2 mins ago</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="flex-1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        @foreach (var mod in _developer.Mods)
+                        {
+                            <div class="flex flex-col bg-white dark:bg-[#111722] rounded-xl border border-slate-200 dark:border-[#232f48] overflow-hidden group hover:border-primary/50 transition-all cursor-pointer" @onclick='() => Nav.NavigateTo($"mod/{mod.Id}")'>
+                                <div class="h-32 bg-slate-100 dark:bg-[#1a2333] relative overflow-hidden">
+                                    <div class="absolute inset-0 opacity-20 bg-gradient-to-br from-primary to-transparent"></div>
+                                    <div class="absolute top-4 left-4 bg-background-dark/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded border border-white/10">v1.2.4</div>
+                                </div>
+                                <div class="p-5 flex flex-col gap-3">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="text-slate-900 dark:text-white font-bold text-lg group-hover:text-primary transition-colors">@mod.Name</h3>
+                                        <span class="material-symbols-outlined text-[#92a4c9]">open_in_new</span>
+                                    </div>
+                                    <p class="text-slate-600 dark:text-[#92a4c9] text-sm line-clamp-2">@mod.Description</p>
+                                    <div class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-[#232f48] mt-2">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex items-center gap-1 text-[#92a4c9] text-xs">
+                                                <span class="material-symbols-outlined text-sm">download</span>
+                                                <span>12.5k</span>
+                                            </div>
+                                            <div class="flex items-center gap-1 text-[#92a4c9] text-xs">
+                                                <span class="material-symbols-outlined text-sm">star</span>
+                                                <span>@FormatCount(mod.Stars)</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-[10px] text-[#92a4c9] italic">Updated 3d ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <aside class="w-full lg:w-80 flex flex-col gap-6">
+                    <div class="bg-white dark:bg-[#111722] rounded-xl border border-slate-200 dark:border-[#232f48] p-5">
+                        <h3 class="text-slate-900 dark:text-white text-lg font-bold mb-4">Stats at a glance</h3>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 dark:text-[#92a4c9] text-sm">Most Active Repo</span>
+                                <span class="text-primary text-xs font-bold px-2 py-0.5 bg-primary/10 rounded">Skyline-FX</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 dark:text-[#92a4c9] text-sm">Commits (30d)</span>
+                                <span class="text-slate-900 dark:text-white text-sm font-bold">248</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 dark:text-[#92a4c9] text-sm">Avg Rating</span>
+                                <div class="flex items-center gap-1 text-yellow-500">
+                                    <span class="material-symbols-outlined text-sm">star</span>
+                                    <span class="text-sm font-bold">4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#111722] rounded-xl border border-slate-200 dark:border-[#232f48] p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-slate-900 dark:text-white text-sm font-bold uppercase tracking-wider">Recent Activity</h3>
+                        </div>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex gap-3">
+                                <div class="size-2 bg-green-500 rounded-full mt-1.5 shrink-0"></div>
+                                <div class="flex flex-col">
+                                    <p class="text-slate-900 dark:text-white text-xs font-bold leading-tight">Released Skyline v2.4.0</p>
+                                    <p class="text-[#92a4c9] text-[10px]">2 hours ago • Release</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <div class="size-2 bg-primary rounded-full mt-1.5 shrink-0"></div>
+                                <div class="flex flex-col">
+                                    <p class="text-slate-900 dark:text-white text-xs font-bold leading-tight">Merged PR #42 in UI Kit</p>
+                                    <p class="text-[#92a4c9] text-[10px]">5 hours ago • Contribution</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+}
+
+@code {
+    [Parameter] public string Username { get; set; } = "";
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+    private Developer? _developer;
+
+    protected override void OnInitialized()
+    {
+        // Mock data
+        _developer = new Developer
+        {
+            GitHubUsername = Username,
+            DisplayName = Username,
+            AvatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuAtxttvgWpXwxjAgmin2Lf4oqsY2l_PHQacL1VaZeTjFeZN1_D2dDjDa2GdmSEQUDnR_VrHWWJ65ea9SoEW2LsxAHaA5AEV7AR301can_U8iRtSVYh7xLG1pp3mjSPRDCVtmbxGmZNA5q9KbpmzOGU38-b1SACIgYe3ccqJp8hbiyZgwJj7L0Uvms6KprtokFTQQmNNfcLqa3RNDNeh5W7tEExe0mw_dh_h_-ZOFcw37buXmAjgoZB6PxnI5AnwfuMvVK8aasZu87tl",
+            Bio = "Open-source enthusiast building decentralized modding tools on OpenMods. Leading the charge in Web3-integrated gaming distributions.",
+            Location = "San Francisco, CA",
+            JoinedAt = new DateTime(2021, 11, 1),
+            Mods = new List<Mod>
+            {
+                new Mod { Id = 1, Name = "Skyline-Shaders-FX", Description = "High-performance post-processing shaders for decentralized rendering engines on OpenMods. Optimized for low-latency VR.", Stars = 428 },
+                new Mod { Id = 2, Name = "Rust-Core-Auth", Description = "A memory-safe authentication library for modded servers with built-in PGP verification support.", Stars = 315 },
+                new Mod { Id = 3, Name = "OpenMods-UI-Kit", Description = "Standardized UI components for mod configuration screens. Native OpenMods ecosystem support.", Stars = 592 }
+            }
+        };
+    }
+
+    private string FormatCount(int count) => count >= 1000 ? $"{(count / 1000.0):F1}k" : count.ToString();
+}

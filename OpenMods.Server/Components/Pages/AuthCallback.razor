@@ -1,0 +1,83 @@
+@page "/auth/callback"
+@inject Client SupabaseClient
+@inject NavigationManager Nav
+@inject ILogger<AuthCallback> Logger
+@inject IJSRuntime JS
+
+<div class="flex items-center justify-center min-h-screen bg-background-dark">
+    <div class="flex flex-col items-center gap-4">
+        <div class="animate-spin size-12 border-4 border-primary border-t-transparent rounded-full"></div>
+        <p class="text-slate-400 font-display">Finalizing authentication...</p>
+    </div>
+</div>
+
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.WebUtilities
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HandleAuthCallback();
+        }
+    }
+
+    private async Task HandleAuthCallback()
+    {
+        try 
+        {
+            var uri = Nav.ToAbsoluteUri(Nav.Uri);
+            if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("code", out var code))
+            {
+                var verifier = await JS.InvokeAsync<string>("sessionStorage.getItem", "supabase_pkce_verifier");
+                
+                if (string.IsNullOrEmpty(verifier))
+                {
+                    Logger.LogError("PKCE verifier not found in session storage");
+                    Nav.NavigateTo("/", true);
+                    return;
+                }
+
+                Logger.LogInformation("Exchanging code for session...");
+                var session = await SupabaseClient.Auth.ExchangeCodeForSession(verifier, code!);
+                
+                if (session != null)
+                {
+                    Logger.LogInformation("Session established for {Email}", session.User?.Email);
+                    
+                    // Persist session to cookie so it survives reloads/redirects
+                    var sessionJson = Newtonsoft.Json.JsonConvert.SerializeObject(new { 
+                        access_token = session.AccessToken, 
+                        refresh_token = session.RefreshToken 
+                    });
+                    await JS.InvokeVoidAsync("setCookie", "supabase_session", sessionJson, 7);
+                    
+                    // Clear the verifier
+                    await JS.InvokeVoidAsync("sessionStorage.removeItem", "supabase_pkce_verifier");
+                    
+                    Logger.LogInformation("Redirecting to dashboard...");
+                    Nav.NavigateTo("/dashboard", false);
+                    return;
+                }
+            }
+
+            // Fallback: check if session is already active (e.g. via cookies/auto-refresh)
+            await Task.Delay(500);
+            if (SupabaseClient.Auth.CurrentSession != null)
+            {
+                Nav.NavigateTo("/dashboard", true);
+            }
+            else
+            {
+                Logger.LogWarning("No code found and no active session");
+                Nav.NavigateTo("/", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in auth callback exchange");
+            Nav.NavigateTo("/", true);
+        }
+    }
+}
