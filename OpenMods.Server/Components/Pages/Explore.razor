@@ -44,6 +44,48 @@
             </div>
         </section>
 
+        <section>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 font-display">License Type</h3>
+            <div class="space-y-3 px-1">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input
+                    class="rounded border-slate-300 dark:border-slate-700 bg-transparent text-primary focus:ring-primary h-4 w-4"
+                    type="checkbox" />
+                    <span class="text-sm text-slate-400 group-hover:text-primary transition-colors">MIT License</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input
+                    class="rounded border-slate-300 dark:border-slate-700 bg-transparent text-primary focus:ring-primary h-4 w-4"
+                    type="checkbox" />
+                    <span class="text-sm text-slate-400 group-hover:text-primary transition-colors">GPL-3.0</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input
+                    class="rounded border-slate-300 dark:border-slate-700 bg-transparent text-primary focus:ring-primary h-4 w-4"
+                    type="checkbox" />
+                    <span class="text-sm text-slate-400 group-hover:text-primary transition-colors">Apache-2.0</span>
+                </label>
+            </div>
+        </section>
+
+        <section>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 font-display">Verification</h3>
+            <div class="space-y-3 px-1">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input
+                    class="rounded border-slate-300 dark:border-slate-700 bg-transparent text-primary focus:ring-primary h-4 w-4"
+                    type="checkbox" @bind="_verifiedOnly" @bind:after="FilterMods" />
+                    <span class="text-sm text-slate-400 group-hover:text-primary transition-colors">Verified Only</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                    <input
+                    class="rounded border-slate-300 dark:border-slate-700 bg-transparent text-primary focus:ring-primary h-4 w-4"
+                    type="checkbox" />
+                    <span class="text-sm text-slate-400 group-hover:text-primary transition-colors">Beta Releases</span>
+                </label>
+            </div>
+        </section>
+
         <div class="mt-auto pt-8 border-t border-slate-200 dark:border-border-dark hidden xl:block font-display">
             <a href="/dashboard"
                    class="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:border-primary hover:text-primary transition-all group">
@@ -57,7 +99,7 @@
     <section class="flex-1 flex flex-col gap-6">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div class="font-display">
-                <h1 class="text-3xl font-bold tracking-tight">Explore OpenMods</h1>
+                <h1 class="text-3xl font-bold tracking-tight">Explore OpenMods Explorer</h1>
                 <p class="text-slate-500 dark:text-slate-400 mt-1">Discover, download, and contribute to
                     community-driven projects.</p>
                 </div>
@@ -69,15 +111,15 @@
                         </button>
                         <button @onclick='() => _viewMode = "list"'
                                 class="p-1.5 rounded @(_viewMode == "list" ? "bg-white dark:bg-slate-700 shadow-sm text-primary" : "text-slate-500 hover:text-primary")">
-                            <span class="material-symbols-outlined block">list</span>
+                            <span class="material-symbols-outlined block text-[20px]">view_list</span>
                         </button>
                     </div>
-                    <div class="h-8 w-px bg-slate-200 dark:bg-border-dark mx-1 hidden md:block"></div>
+                    <div class="h-8 w-px bg-slate-200 dark:border-border-dark mx-1 hidden md:block"></div>
                     <div class="relative group">
                         <button
                             class="flex items-center gap-2 px-3 h-10 rounded-lg bg-slate-200 dark:bg-card-dark text-sm font-bold whitespace-nowrap">
                             <span class="material-symbols-outlined text-[20px]">sort</span>
-                            @(_sortOption)
+                            @(_sortOption) First
                             <span class="material-symbols-outlined text-[18px]">expand_more</span>
                         </button>
                         <div
@@ -93,12 +135,27 @@
                 </div>
             </div>
 
+            <div class="flex items-center gap-2">
+                @if (_verifiedOnly)
+                {
+                    <button
+                        class="flex items-center gap-2 px-3 py-1.5 bg-slate-800 border border-border-dark rounded-lg text-xs font-bold text-white group"
+                        @onclick="() => { _verifiedOnly = false; FilterMods(); }">
+                        Verified <span
+                        class="material-symbols-outlined text-sm text-slate-500 group-hover:text-white">close</span>
+                    </button>
+                }
+                <button class="text-xs font-bold text-slate-500 hover:text-white transition-colors"
+                        @onclick="ResetFilters">Clear all</button>
+            </div>
+
             @if (_isLoading)
             {
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-                    @for (int i = 0; i < 6; i++)
+                <div
+                    class="@(_viewMode == "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6" : "flex flex-col gap-4")">
+                    @for (int i = 0; i < 4; i++)
                     {
-                        <div class="bg-card-dark h-80 rounded-xl animate-pulse"></div>
+                        <div class="bg-card-dark @(_viewMode == "grid" ? "h-80" : "h-44") rounded-2xl animate-pulse"></div>
                     }
                 </div>
             }
@@ -115,11 +172,51 @@
                     }
         else
                     {
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+                        <div
+                            class="@(_viewMode == "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6" : "flex flex-col gap-4")">
                             @foreach (var mod in _filteredMods)
                             {
-                                <ModCard Mod="mod" />
+                                if (_viewMode == "grid")
+                                {
+                                    <ModCard Mod="mod" />
+                                }
+                                else
+                                {
+                                    <ModListItem Mod="mod" />
+                                }
                             }
+                        </div>
+
+                        <!-- Design elements from screenshot -->
+                        <div
+                            class="mt-12 p-12 border-2 border-dashed border-border-dark rounded-[2rem] flex flex-col items-center justify-center text-center gap-4 bg-black/10">
+                            <div class="size-10 rounded-full bg-slate-800 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-slate-400 text-lg">explore_off</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white">End of the line</h3>
+                                <p class="text-sm text-slate-500 max-w-xs mx-auto">Check back later for new decentralized releases.</p>
+                            </div>
+                            <button class="text-primary text-sm font-bold hover:underline">Load More</button>
+                        </div>
+
+                        <div class="mt-12 flex items-center justify-center gap-2">
+                            <button
+                                class="size-10 rounded-xl border border-border-dark flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-600 transition-all">
+                                <span class="material-symbols-outlined text-[20px]">chevron_left</span>
+                            </button>
+                            <button class="size-10 rounded-xl bg-primary text-white font-bold">1</button>
+                            <button
+                            class="size-10 rounded-xl border border-border-dark flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-600 transition-all">2</button>
+                            <button
+                            class="size-10 rounded-xl border border-border-dark flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-600 transition-all">3</button>
+                            <span class="text-slate-600 px-2">...</span>
+                            <button
+                            class="size-10 rounded-xl border border-border-dark flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-600 transition-all">24</button>
+                            <button
+                                class="size-10 rounded-xl border border-border-dark flex items-center justify-center text-slate-500 hover:text-white hover:border-slate-600 transition-all">
+                                <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                            </button>
                         </div>
                     }
                 </section>
@@ -130,6 +227,7 @@
     private string _searchQuery = "";
     private string _sortOption = "Newest";
     private string _viewMode = "grid";
+    private bool _verifiedOnly = false;
     private bool _isLoading = true;
 
     private List<Category> _categories = new();
@@ -141,6 +239,12 @@
         using var context = await DbFactory.CreateDbContextAsync();
         
         _categories = await context.Categories.OrderBy(c => c.Name).ToListAsync();
+        
+        // Manual "seed" for Total Conversions if ignoring DbInitializer for now
+        if (!_categories.Any(c => c.Name == "Total Conversions"))
+        {
+            _categories.Add(new Category { Name = "Total Conversions", Icon = "inventory_2" });
+        }
         
         _allMods = await context.Mods
             .Include(m => m.Developer)
@@ -169,6 +273,7 @@
     {
         _searchQuery = "";
         SelectedCategoryId = null;
+        _verifiedOnly = false;
         FilterMods();
     }
 
@@ -191,7 +296,13 @@
                 (m.Description != null && m.Description.ToLower().Contains(search)));
         }
 
-        // 3. Sorting
+        // 3. Verification Filter
+        if (_verifiedOnly)
+        {
+            query = query.Where(m => m.Stars >= 1000);
+        }
+
+        // 4. Sorting
         query = _sortOption switch
         {
             "Stars" => query.OrderByDescending(m => m.Stars),
