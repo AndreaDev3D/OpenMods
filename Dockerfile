@@ -26,8 +26,8 @@ WORKDIR /app
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 
 # Default port, can be overridden by Koyeb/Docker
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=8000
+EXPOSE 8000
 
 # Copy the published output from the publish stage
 COPY --from=publish /app/publish .

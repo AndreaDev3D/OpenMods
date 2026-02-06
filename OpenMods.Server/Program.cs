@@ -26,7 +26,7 @@ else
 var builder = WebApplication.CreateBuilder(args);
 
 // Support for Koyeb/Docker dynamic port
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // Diagnostic logging for environment
@@ -37,6 +37,14 @@ Console.WriteLine($"Conn string length: {Environment.GetEnvironmentVariable("CON
 // Add services to the container.
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "keys")));
+
+// Configure Forwarded Headers for Koyeb/Docker
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuthenticationStateProvider, SupabaseAuthStateProvider>();
@@ -65,10 +73,8 @@ builder.Services.AddRazorComponents()
 
 var app = builder.Build();
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
-});
+// Must be first
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
