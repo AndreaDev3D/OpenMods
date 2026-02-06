@@ -55,6 +55,7 @@ public class SupabaseAuthStateProvider : AuthenticationStateProvider
             new Claim(ClaimTypes.NameIdentifier, user.Id ?? ""),
             new Claim(ClaimTypes.Email, user.Email ?? ""),
             new Claim("avatar_url", user.UserMetadata?.ContainsKey("avatar_url") == true ? user.UserMetadata["avatar_url"].ToString() ?? "" : ""),
+            new Claim("github_handle", user.UserMetadata?.ContainsKey("user_name") == true ? user.UserMetadata["user_name"].ToString() ?? "" : ""),
             new Claim(ClaimTypes.Name, user.UserMetadata?.ContainsKey("full_name") == true ? user.UserMetadata["full_name"].ToString() ?? "" : user.Email ?? "")
         };
 

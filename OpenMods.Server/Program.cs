@@ -47,6 +47,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddHttpClient<GitHubService>();
 builder.Services.AddScoped<AuthenticationStateProvider, SupabaseAuthStateProvider>();
 builder.Services.AddAuthentication("Supabase")
     .AddCookie("Supabase", options =>

@@ -1,4 +1,9 @@
 @using OpenMods.Server.Models
+@using OpenMods.Server.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject GitHubService GitHubService
+@inject AuthenticationStateProvider AuthStateProvider
 
 @if (IsOpen)
 {
@@ -18,50 +23,78 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                         <span class="material-symbols-outlined text-[20px]">search</span>
                     </div>
-                    <input class="w-full bg-white dark:bg-[#232f48] border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white" placeholder="Search your repositories..." type="text" />
+                    <input class="w-full bg-white dark:bg-[#232f48] border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-900 dark:text-white" 
+                           placeholder="Search your repositories..." 
+                           type="text" 
+                           @bind="_searchQuery" 
+                           @bind:event="oninput" />
                 </div>
             </div>
             <div class="flex-1 overflow-y-auto">
-                @foreach (var repo in _mockRepos)
+                @if (_isLoading)
                 {
-                    <div class="flex items-center gap-4 px-6 py-5 hover:bg-slate-50 dark:hover:bg-[#1d273b] transition-colors border-b border-slate-100 dark:border-slate-800/50 group">
-                        <div class="size-12 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary shrink-0">
-                            <span class="material-symbols-outlined">@(repo.Icon)</span>
-                        </div>
-                        <div class="flex flex-col flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="text-base font-semibold text-slate-900 dark:text-white truncate">@repo.Name</span>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">Public</span>
-                            </div>
-                            <p class="text-sm text-slate-500 dark:text-[#92a4c9] line-clamp-1 mt-0.5">@repo.Description</p>
-                            <div class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
-                                <div class="flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[14px] text-amber-500 fill-current">star</span>
-                                    <span>@repo.Stars</span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <span class="w-2 h-2 rounded-full @(repo.LangColor)"></span>
-                                    <span>@repo.Language</span>
-                                </div>
-                                <span>Updated @repo.LastUpdated</span>
-                            </div>
-                        </div>
-                        <button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-primary/20 shrink-0" @onclick="() => OnRepoSelected.InvokeAsync(repo.Name)">
-                            Select
-                        </button>
+                    <div class="flex flex-col items-center justify-center p-12 gap-4">
+                        <div class="animate-spin size-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                        <p class="text-slate-500 text-sm">Fetching your repositories...</p>
                     </div>
+                }
+                else if (!FilteredRepos.Any())
+                {
+                    <div class="flex flex-col items-center justify-center p-12 text-center">
+                        <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">inventory_2</span>
+                        <p class="text-slate-500 text-sm font-medium">No repositories found</p>
+                        <p class="text-slate-400 text-xs mt-1">Make sure you have public repositories on GitHub.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var repo in FilteredRepos)
+                    {
+                        <div class="flex items-center gap-4 px-6 py-5 hover:bg-slate-50 dark:hover:bg-[#1d273b] transition-colors border-b border-slate-100 dark:border-slate-800/50 group">
+                            <div class="size-12 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary shrink-0">
+                                <span class="material-symbols-outlined">@(GetIconForLanguage(repo.Language))</span>
+                            </div>
+                            <div class="flex flex-col flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base font-semibold text-slate-900 dark:text-white truncate">@repo.Name</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase tracking-wider">Public</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(repo.Description))
+                                {
+                                    <p class="text-sm text-slate-500 dark:text-[#92a4c9] line-clamp-1 mt-0.5">@repo.Description</p>
+                                }
+                                <div class="flex items-center gap-3 mt-2 text-xs text-slate-400 dark:text-slate-500">
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[14px] text-amber-500 fill-current">star</span>
+                                        <span>@repo.Stars</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(repo.Language))
+                                    {
+                                        <div class="flex items-center gap-1">
+                                            <span class="w-2 h-2 rounded-full @(GetLangColor(repo.Language))"></span>
+                                            <span>@repo.Language</span>
+                                        </div>
+                                    }
+                                    <span>Updated @GetTimeAgo(repo.UpdatedAt)</span>
+                                </div>
+                            </div>
+                            <button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-primary/20 shrink-0" @onclick="() => OnRepoSelected.InvokeAsync(repo.Name)">
+                                Select
+                            </button>
+                        </div>
+                    }
                 }
             </div>
             <div class="p-4 bg-slate-50 dark:bg-[#1a2336] border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
                 <p class="text-xs text-slate-500 dark:text-[#92a4c9]">
-                    Showing @_mockRepos.Count of 28 public repositories
+                    @if (!_isLoading)
+                    {
+                        <span>Showing @FilteredRepos.Count() repositories</span>
+                    }
                 </p>
                 <div class="flex gap-2">
-                    <button class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#232f48] rounded-lg transition-colors">
+                    <button class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#232f48] rounded-lg transition-colors" @onclick="LoadRepos">
                         Refresh List
-                    </button>
-                    <button class="px-4 py-2 text-sm font-medium bg-slate-200 dark:bg-[#232f48] text-slate-800 dark:text-white rounded-lg hover:bg-slate-300 dark:hover:bg-[#2e3d5c] transition-colors">
-                        Load More
                     </button>
                 </div>
             </div>
@@ -74,27 +107,75 @@
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
     [Parameter] public EventCallback<string> OnRepoSelected { get; set; }
 
+    private List<GitHubRepository> _repos = new();
+    private string _searchQuery = "";
+    private bool _isLoading = false;
+
+    private IEnumerable<GitHubRepository> FilteredRepos => 
+        string.IsNullOrWhiteSpace(_searchQuery) 
+            ? _repos 
+            : _repos.Where(r => r.Name.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) || 
+                               (r.Description?.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen && !_repos.Any() && !_isLoading)
+        {
+            await LoadRepos();
+        }
+    }
+
+    private async Task LoadRepos()
+    {
+        _isLoading = true;
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var githubHandle = authState.User.FindFirst("github_handle")?.Value;
+            
+            if (!string.IsNullOrEmpty(githubHandle))
+            {
+                _repos = await GitHubService.GetPublicRepositories(githubHandle);
+            }
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
     private void Close()
     {
         IsOpen = false;
         IsOpenChanged.InvokeAsync(false);
     }
 
-    private List<RepoItem> _mockRepos = new()
+    private string GetIconForLanguage(string? language) => language?.ToLower() switch
     {
-        new RepoItem { Name = "awesome-react-mod", Description = "A decentralized modding framework for high-performance open-source games.", Stars = "1,240", Language = "TypeScript", LangColor = "bg-[#3178c6]", LastUpdated = "2 days ago", Icon = "account_tree" },
-        new RepoItem { Name = "shader-pack-ultra", Description = "High-performance ray-tracing shaders for voxel engines using GLSL.", Stars = "856", Language = "JavaScript", LangColor = "bg-[#f1e05a]", LastUpdated = "5 hours ago", Icon = "blur_on" },
-        new RepoItem { Name = "rust-game-engine", Description = "Experimental ECS-based game engine written from scratch in Rust.", Stars = "3.2k", Language = "Rust", LangColor = "bg-[#dea584]", LastUpdated = "1 week ago", Icon = "settings_input_component" }
+        "c#" => "deployed_code",
+        "typescript" or "javascript" => "code",
+        "rust" => "settings_input_component",
+        "python" => "terminal",
+        _ => "folder"
     };
 
-    private class RepoItem
+    private string GetLangColor(string? language) => language?.ToLower() switch
     {
-        public string Name { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string Stars { get; set; } = "";
-        public string Language { get; set; } = "";
-        public string LangColor { get; set; } = "";
-        public string LastUpdated { get; set; } = "";
-        public string Icon { get; set; } = "";
+        "c#" => "bg-blue-500",
+        "typescript" => "bg-[#3178c6]",
+        "javascript" => "bg-[#f1e05a]",
+        "rust" => "bg-[#dea584]",
+        "python" => "bg-[#3572A5]",
+        _ => "bg-slate-400"
+    };
+
+    private string GetTimeAgo(DateTime dateTime)
+    {
+        var span = DateTime.UtcNow - dateTime.ToUniversalTime();
+        if (span.TotalDays > 365) return $"{(int)(span.TotalDays / 365)} years ago";
+        if (span.TotalDays > 30) return $"{(int)(span.TotalDays / 30)} months ago";
+        if (span.TotalDays > 1) return $"{(int)span.TotalDays} days ago";
+        if (span.TotalHours > 1) return $"{(int)span.TotalHours} hours ago";
+        return "just now";
     }
 }

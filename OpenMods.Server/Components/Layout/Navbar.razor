@@ -72,8 +72,19 @@
     {
         try 
         {
-            Logger.LogInformation("Starting login process...");
-            var callbackUrl = (Environment.GetEnvironmentVariable("APP_URL") ?? Nav.BaseUri).TrimEnd('/') + "/auth/callback";
+            var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? Nav.BaseUri;
+            Logger.LogInformation("Login started. APP_URL from env: {AppUrl}, Nav.BaseUri: {BaseUri}", 
+                Environment.GetEnvironmentVariable("APP_URL"), Nav.BaseUri);
+
+            var callbackUrl = appUrl.TrimEnd('/') + "/auth/callback";
+            
+            // Ensure callbackUrl has a scheme
+            if (!callbackUrl.StartsWith("http://") && !callbackUrl.StartsWith("https://"))
+            {
+                callbackUrl = "http://" + callbackUrl;
+                Logger.LogWarning("callbackUrl missing scheme, prepended http://. New callbackUrl: {CallbackUrl}", callbackUrl);
+            }
+
             Logger.LogInformation("Requesting auth with RedirectTo: {CallbackUrl}", callbackUrl);
             var result = await SupabaseClient.Auth.SignIn(Supabase.Gotrue.Constants.Provider.Github, new Supabase.Gotrue.SignInOptions
             {
