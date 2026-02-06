@@ -74,7 +74,7 @@ builder.Services.AddScoped(provider => new Supabase.Client(supabaseUrl, supabase
     AutoConnectRealtime = true
 }));
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING")));
 
 builder.Services.AddHttpContextAccessor();

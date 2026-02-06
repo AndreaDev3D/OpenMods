@@ -13,7 +13,7 @@
                     </h1>
                     <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                         <span class="material-symbols-outlined text-sm">link</span>
-                        <p class="text-sm font-normal">github.com/@SelectedRepo</p>
+                        <p class="text-sm font-normal">github.com/@SelectedRepoObject?.FullName</p>
                     </div>
                 </div>
                 <button
@@ -133,9 +133,9 @@
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
-    [Parameter] public string SelectedRepo { get; set; } = "";
+    [Parameter] public GitHubRepository? SelectedRepoObject { get; set; }
     [Parameter] public EventCallback OnBack { get; set; }
-    [Parameter] public EventCallback OnPublish { get; set; }
+    [Parameter] public EventCallback<ModMetadata> OnPublish { get; set; }
 
     private string SelectedCategory { get; set; } = "Gameplay";
     private List<string> _tags = new() { "Optimization", "Graphics" };
@@ -148,7 +148,16 @@
     }
 
     private void Back() => OnBack.InvokeAsync();
-    private void Publish() => OnPublish.InvokeAsync();
+    private void Publish()
+    {
+        var metadata = new ModMetadata
+        {
+            Category = SelectedCategory,
+            Tags = _tags,
+            IsConfirmed = IsConfirmed
+        };
+        OnPublish.InvokeAsync(metadata);
+    }
 
     private void HandleTagInput(KeyboardEventArgs e)
     {

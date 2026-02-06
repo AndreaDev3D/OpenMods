@@ -5,68 +5,113 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
     <script>
         tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#135bec",
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#101622",
-                        "card-dark": "#1a2233",
-                        "border-dark": "#2d3a54",
-                    },
-                    fontFamily: {
-                        "display": ["Space Grotesk", "sans-serif"]
-                    },
-                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
-                },
-            },
+        darkMode: "class",
+        theme: {
+        extend: {
+        colors: {
+        "primary": "#135bec",
+        "background-light": "#f6f6f8",
+        "background-dark": "#101622",
+        "card-dark": "#1a2233",
+        "border-dark": "#2d3a54",
+        },
+        fontFamily: {
+        "display": ["Space Grotesk", "sans-serif"]
+        },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+        },
+        },
         }
         
         // Cookie Helpers
         window.setCookie = (name, value, days) => {
-            var expires = "";
-            if (days) {
-                var date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = "; expires=" + date.toUTCString();
-            }
-            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        var expires = "";
+        if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
         }
         window.getCookie = (name) => {
-            var nameEQ = name + "=";
-            var ca = document.cookie.split(';');
-            for(var i=0;i < ca.length;i++) {
-                var c = ca[i];
-                while (c.charAt(0)==' ') c = c.substring(1,c.length);
-                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-            }
-            return null;
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
         }
     </script>
     <style type="text/tailwindcss">
         body {
-            font-family: 'Space Grotesk', sans-serif;
+        font-family: 'Space Grotesk', sans-serif;
         }
         .glass-nav {
-            background: rgba(16, 22, 34, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(16, 22, 34, 0.8);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .mod-card {
-            @@apply transition-all duration-300;
-            background: #1a2233;
-            border: 1px solid #232f48;
+        @@apply transition-all duration-300;
+        background: #1a2233;
+        border: 1px solid #232f48;
         }
         .mod-card:hover {
-            border-color: #135bec;
-            transform: translateY(-4px);
-            box-shadow: 0 10px 30px -10px rgba(19, 91, 236, 0.3);
+        border-color: #135bec;
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px -10px rgba(19, 91, 236, 0.3);
+        }
+
+        /* GitHub-style Markdown Overrides */
+        .prose h1, .prose h2 {
+        @@apply border-b border-border-dark pb-2 mb-4 font-bold;
+        }
+        .prose h1 { @@apply text-3xl; }
+        .prose h2 { @@apply text-2xl mt-8; }
+        .prose h3 { @@apply text-xl font-bold mt-6 mb-3; }
+        
+        .prose p { @@apply mb-4 leading-relaxed; }
+        
+        .prose code {
+        @@apply bg-slate-800/50 px-1.5 py-0.5 rounded text-primary font-mono text-sm before:content-none after:content-none;
+        }
+        
+        .prose pre {
+        @@apply bg-slate-900/80 border border-border-dark p-4 rounded-xl mb-6 overflow-x-auto;
+        }
+        
+        .prose pre code {
+        @@apply bg-transparent p-0 text-slate-300 before:content-none after:content-none;
+        }
+        
+        .prose ul, .prose ol {
+        @@apply mb-6 ml-6 list-outside;
+        }
+        
+        .prose li {
+        @@apply mb-2;
+        }
+        
+        .prose blockquote {
+        @@apply border-l-4 border-slate-700 pl-4 py-1 italic text-slate-400 mb-6;
+        }
+        
+        .prose img {
+        @@apply inline-block align-middle rounded mb-1;
+        }
+        
+        .prose a {
+        @@apply text-primary no-underline hover:underline font-medium;
         }
     </style>
     <ResourcePreloader />

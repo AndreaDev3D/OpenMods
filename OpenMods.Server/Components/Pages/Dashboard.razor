@@ -1,20 +1,45 @@
 @page "/dashboard"
 @layout OpenMods.Server.Components.Layout.DashboardLayout
+@using OpenMods.Server.Data
+@using OpenMods.Server.Models
+@using OpenMods.Server.Services
+@using Microsoft.EntityFrameworkCore
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
-<header class="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-8 py-4 flex items-center justify-between">
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject GitHubService GitHubService
+@inject NavigationManager NavigationManager
+
+@if (!string.IsNullOrEmpty(_syncMessage))
+{
+    <div class="fixed top-24 right-8 z-[60] bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-xl font-bold animate-bounce flex items-center gap-2">
+        <span class="material-symbols-outlined">check_circle</span>
+        @_syncMessage
+    </div>
+}
+
+<header
+    class="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-8 py-4 flex items-center justify-between">
     <div class="flex items-center gap-4 flex-1 max-w-xl">
         <div class="relative w-full">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-            <input class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-card-dark border-none rounded-lg text-sm focus:ring-2 focus:ring-primary" placeholder="Search OpenMods repositories..." type="text" />
+            <span
+            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+            <input
+            class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-card-dark border-none rounded-lg text-sm focus:ring-2 focus:ring-primary"
+            placeholder="Search OpenMods repositories..." type="text" />
         </div>
     </div>
     <div class="flex items-center gap-4">
-        <button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-card-dark rounded-full relative">
+        <button
+            class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-card-dark rounded-full relative">
             <span class="material-symbols-outlined">notifications</span>
-            <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
+            <span
+            class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
         </button>
-        <button class="bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:brightness-110 shadow-lg shadow-primary/20" @onclick="() => showRepoModal = true">
+        <button
+            class="bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:brightness-110 shadow-lg shadow-primary/20"
+            @onclick="() => showRepoModal = true">
             <span class="material-symbols-outlined text-sm">sync</span>
             Sync New Repository
         </button>
@@ -22,7 +47,8 @@
 </header>
 
 <SelectGitHubRepositoryModal @bind-IsOpen="showRepoModal" OnRepoSelected="HandleRepoSelected" />
-<ConfigureMetadataModal @bind-IsOpen="showMetadataModal" SelectedRepo="@selectedRepo" OnBack="BackToRepoSelect" OnPublish="HandlePublish" />
+<ConfigureMetadataModal @bind-IsOpen="showMetadataModal" SelectedRepoObject="@selectedRepoObject" OnBack="BackToRepoSelect"
+                        OnPublish="@(m => HandlePublish(m))" />
 
 <div class="p-8 space-y-8">
     <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -64,92 +90,83 @@
             <p class="text-slate-500 text-sm">Manage and distribute your synced GitHub projects on OpenMods.</p>
         </div>
         <div class="flex gap-2">
-            <button class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-100 dark:bg-card-dark border border-slate-200 dark:border-border-dark">All</button>
+            <button
+            class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-100 dark:bg-card-dark border border-slate-200 dark:border-border-dark">All</button>
             <button class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-500">Live</button>
             <button class="px-4 py-2 text-sm font-semibold rounded-lg text-slate-500">Draft</button>
         </div>
     </div>
 
     <section class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-        @foreach (var repo in _repos)
+        @foreach (var mod in _dbMods)
         {
             <div class="bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden flex flex-col">
                 <div class="p-6 flex-1">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-lg bg-slate-900 dark:bg-slate-800 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-white">@(repo.Icon)</span>
+                                <span class="material-symbols-outlined text-white">deployed_code</span>
                             </div>
                             <div>
-                                <h4 class="font-bold text-lg text-slate-900 dark:text-white">@repo.Name</h4>
-                                <p class="text-xs text-slate-500 font-mono">@repo.Url</p>
+                                <h4 class="font-bold text-lg text-slate-900 dark:text-white">@mod.Name</h4>
+                                <p class="text-xs text-slate-500 font-mono">@mod.GitHubRepoUrl</p>
                             </div>
                         </div>
-                        <span class="bg-@(repo.StatusColor)-500/10 text-@(repo.StatusColor)-500 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">@repo.Status</span>
+                        <span class="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Live</span>
                     </div>
                     <p class="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 mb-4">
-                        @repo.Description
+                        @mod.Description
                     </p>
                     <div class="flex items-center gap-6 text-xs text-slate-500 font-medium">
                         <div class="flex items-center gap-1.5">
                             <span class="material-symbols-outlined text-sm">star</span>
-                            @repo.Stars
-                        </div>
-                        <div class="flex items-center gap-1.5 @(repo.IsUpdatePending ? "text-amber-500" : "")">
-                            <span class="material-symbols-outlined text-sm">history</span>
-                            @repo.Version @(repo.IsUpdatePending ? "(Local)" : "")
+                            @mod.Stars
                         </div>
                         <div class="flex items-center gap-1.5">
                             <span class="material-symbols-outlined text-sm">schedule</span>
-                            @repo.LastSync
+                            Updated @GetTimeAgo(mod.UpdatedAt)
                         </div>
                     </div>
                 </div>
                 <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
-                    <button class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                    <a href="mod/@mod.Id" class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
                         <span class="material-symbols-outlined text-sm">visibility</span>
                         View Page
+                    </a>
+                    <button class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark px-3 py-1.5 rounded text-xs font-bold flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-border-dark transition-colors"
+                            @onclick="() => RefreshModFromGitHub(mod)">
+                        <span class="material-symbols-outlined text-xs">refresh</span>
+                        Refresh from GitHub
                     </button>
-                    @if (repo.IsUpdatePending)
-                    {
-                        <button class="bg-primary text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-2 hover:brightness-110 transition-all">
-                            <span class="material-symbols-outlined text-xs">publish</span>
-                            Sync & Deploy
-                        </button>
-                    }
-                    else
-                    {
-                        <button class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark px-3 py-1.5 rounded text-xs font-bold flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
-                            <span class="material-symbols-outlined text-xs">refresh</span>
-                            Refresh from GitHub
-                        </button>
-                    }
                 </div>
             </div>
         }
 
-        <div class="bg-white dark:bg-card-dark rounded-xl border border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex flex-col justify-center items-center p-8 text-center min-h-[280px]">
+        <div
+            class="bg-white dark:bg-card-dark rounded-xl border border-dashed border-slate-300 dark:border-slate-600 overflow-hidden flex flex-col justify-center items-center p-8 text-center min-h-[280px]">
             <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
                 <span class="material-symbols-outlined text-slate-400 text-3xl">add_to_drive</span>
             </div>
             <h4 class="font-bold text-lg mb-2">Ready for your next mod?</h4>
-            <p class="text-sm text-slate-500 mb-6 max-w-[200px]">Connect more GitHub repositories to expand your OpenMods portfolio.</p>
-            <button class="bg-slate-900 dark:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
-                Explore Repositories
-            </button>
-        </div>
-    </section>
-</div>
+            <p class="text-sm text-slate-500 mb-6 max-w-[200px]">Connect more GitHub repositories to expand your
+                OpenMods portfolio.</p>
+                <button
+                    class="bg-slate-900 dark:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">
+                    Explore Repositories
+                </button>
+            </div>
+        </section>
+    </div>
 
 @code {
     private bool showRepoModal;
     private bool showMetadataModal;
-    private string selectedRepo = "";
-    private List<RepoItem> _repos = new();
+    private GitHubRepository? selectedRepoObject;
+    private List<Mod> _dbMods = new();
 
-    private void HandleRepoSelected(string repoName)
+    private void HandleRepoSelected(GitHubRepository repo)
     {
-        selectedRepo = repoName;
+        selectedRepoObject = repo;
         showRepoModal = false;
         showMetadataModal = true;
     }
@@ -160,53 +177,137 @@
         showRepoModal = true;
     }
 
-    private void HandlePublish()
+    private async Task HandlePublish(ModMetadata metadata)
     {
         showMetadataModal = false;
-        // In reality, would save to DB here
-    }
+        
+        if (selectedRepoObject == null) return;
 
-    protected override void OnInitialized()
-    {
-        _repos = new List<RepoItem>
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var githubHandle = authState.User.FindFirst("github_handle")?.Value;
+        var avatarUrl = authState.User.FindFirst("avatar_url")?.Value;
+
+        if (string.IsNullOrEmpty(githubHandle)) return;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        // 1. Get or Create Developer
+        var developer = await context.Developers
+            .FirstOrDefaultAsync(d => d.GitHubUsername == githubHandle);
+            
+        if (developer == null)
         {
-            new RepoItem { 
-                Name = "enhanced-textures-v2", 
-                Url = "github.com/octo/enhanced-textures", 
-                Description = "High-resolution texture pack for popular sandbox games. Features PBR materials and custom shaders.",
-                Icon = "folder",
-                Status = "Live",
-                StatusColor = "green",
-                Stars = "1.2k",
-                Version = "v3.2.1",
-                LastSync = "2 days ago"
-            },
-            new RepoItem { 
-                Name = "performance-optimizer", 
-                Url = "github.com/octo/perf-opt", 
-                Description = "Memory management overhaul reducing heap usage by 30%. Supports multicore processing.",
-                Icon = "bolt",
-                Status = "Update Pending",
-                StatusColor = "amber",
-                Stars = "452",
-                Version = "v1.0.4",
-                LastSync = "4 hours ago",
-                IsUpdatePending = true
-            }
+            developer = new Developer
+            {
+                GitHubUsername = githubHandle,
+                AvatarUrl = avatarUrl,
+                DisplayName = githubHandle
+            };
+            context.Developers.Add(developer);
+            await context.SaveChangesAsync();
+        }
+
+        // Fetch README
+        var readmeHtml = await GitHubService.GetReadmeHtml(selectedRepoObject.FullName);
+
+        // 2. Create Mod
+        var mod = new Mod
+        {
+            Name = selectedRepoObject!.Name,
+            Description = selectedRepoObject.Description,
+            LongDescription = readmeHtml,
+            GitHubRepoUrl = selectedRepoObject.HtmlUrl,
+            DeveloperId = developer.Id,
+            Stars = selectedRepoObject.Stars,
+            Tags = metadata.Tags ?? new List<string>(),
+            UpdatedAt = DateTime.UtcNow
         };
+
+        // Add Category
+        var dbCategory = await context.Categories.FirstOrDefaultAsync(c => c.Name == metadata.Category);
+        if (dbCategory != null)
+        {
+            mod.Categories.Add(dbCategory);
+        }
+        
+        context.Mods.Add(mod);
+        await context.SaveChangesAsync();
+
+        // 3. Refresh List
+        await LoadMods();
     }
 
-    private class RepoItem
+    private string? _syncMessage;
+
+    protected override async Task OnInitializedAsync()
     {
-        public string Name { get; set; } = "";
-        public string Url { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string Icon { get; set; } = "";
-        public string Status { get; set; } = "";
-        public string StatusColor { get; set; } = "";
-        public string Stars { get; set; } = "";
-        public string Version { get; set; } = "";
-        public string LastSync { get; set; } = "";
-        public bool IsUpdatePending { get; set; }
+        await LoadMods();
+    }
+
+    private async Task LoadMods()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var githubHandle = authState.User.FindFirst("github_handle")?.Value;
+
+        if (!string.IsNullOrEmpty(githubHandle))
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+            _dbMods = await context.Mods
+                .Include(m => m.Developer)
+                .Where(m => m.Developer!.GitHubUsername == githubHandle)
+                .OrderByDescending(m => m.UpdatedAt)
+                .ToListAsync();
+        }
+    }
+
+    private async Task RefreshModFromGitHub(Mod mod)
+    {
+        if (string.IsNullOrEmpty(mod.GitHubRepoUrl)) return;
+
+        // Parse owner/repo from URL
+        var uri = new Uri(mod.GitHubRepoUrl);
+        var fullName = uri.AbsolutePath.TrimStart('/'); // e.g., "AndreaDev3D/OpenModsDemoMod1"
+        
+        var repoData = await GitHubService.GetRepository(fullName);
+        if (repoData != null)
+        {
+            mod.Stars = repoData.Stars;
+            mod.Description = repoData.Description;
+            
+            var readmeHtml = await GitHubService.GetReadmeHtml(fullName);
+            if (!string.IsNullOrEmpty(readmeHtml))
+            {
+                mod.LongDescription = readmeHtml;
+            }
+
+            mod.UpdatedAt = DateTime.UtcNow;
+
+            using var context = await DbFactory.CreateDbContextAsync();
+            context.Mods.Update(mod);
+            await context.SaveChangesAsync();
+            
+            Console.WriteLine($"[DEBUG] Successfully synced {mod.Name}. README length: {mod.LongDescription?.Length ?? 0}");
+            
+            _syncMessage = $"Successfully synced {mod.Name}!";
+            StateHasChanged();
+            
+            await Task.Delay(3000);
+            _syncMessage = null;
+            StateHasChanged();
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] Failed to fetch repository data for {fullName}");
+        }
+    }
+
+    private string GetTimeAgo(DateTime dateTime)
+    {
+        var span = DateTime.UtcNow - dateTime.ToUniversalTime();
+        if (span.TotalDays > 365) return $"{(int)(span.TotalDays / 365)} years ago";
+        if (span.TotalDays > 30) return $"{(int)(span.TotalDays / 30)} months ago";
+        if (span.TotalDays > 1) return $"{(int)span.TotalDays} days ago";
+        if (span.TotalHours > 1) return $"{(int)span.TotalHours} hours ago";
+        return "just now";
     }
 }
