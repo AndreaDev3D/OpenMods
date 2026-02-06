@@ -30,9 +30,9 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "8000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // Diagnostic logging for environment
-Console.WriteLine($"URL: {Environment.GetEnvironmentVariable("SUPABASE_URL")}");
-Console.WriteLine($"Key length: {Environment.GetEnvironmentVariable("SUPABASE_ANON_KEY")?.Length ?? 0}");
-Console.WriteLine($"Conn string length: {Environment.GetEnvironmentVariable("CONNECTION_STRING")?.Length ?? 0}");
+Console.WriteLine($"[DEBUG] SUPABASE_URL: {Environment.GetEnvironmentVariable("SUPABASE_URL")}");
+Console.WriteLine($"[DEBUG] APP_URL: {Environment.GetEnvironmentVariable("APP_URL")}");
+Console.WriteLine($"[DEBUG] PORT: {port}");
 
 // Add services to the container.
 builder.Services.AddDataProtection()

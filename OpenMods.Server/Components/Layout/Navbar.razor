@@ -74,6 +74,7 @@
         {
             Logger.LogInformation("Starting login process...");
             var callbackUrl = (Environment.GetEnvironmentVariable("APP_URL") ?? Nav.BaseUri).TrimEnd('/') + "/auth/callback";
+            Logger.LogInformation("Requesting auth with RedirectTo: {CallbackUrl}", callbackUrl);
             var result = await SupabaseClient.Auth.SignIn(Supabase.Gotrue.Constants.Provider.Github, new Supabase.Gotrue.SignInOptions
             {
                 RedirectTo = callbackUrl,
