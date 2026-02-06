@@ -1,20 +1,29 @@
 @page "/explore"
+@using OpenMods.Server.Models
+@using OpenMods.Server.Data
+@using OpenMods.Server.Components.Shared
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
 
 <PageTitle>OpenMods | Explore Open-Source Mods</PageTitle>
 
 <div class="max-w-[1440px] mx-auto flex flex-col xl:flex-row gap-8 px-6 py-8">
     <aside class="w-full xl:w-64 shrink-0 flex flex-col gap-8">
         <section>
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Categories</h3>
-            <nav class="flex flex-col gap-1">
-                <button class="flex items-center gap-3 px-3 py-2 rounded-lg @(SelectedCategory == null ? "bg-primary/10 text-primary font-medium" : "hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors")" @onclick="() => SelectCategory(null)">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 font-display">Categories</h3>
+            <nav class="flex flex-col gap-1 font-display">
+                <button
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg @(SelectedCategoryId == null ? "bg-primary/10 text-primary font-bold" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-card-dark transition-colors")"
+                    @onclick="() => SelectCategory(null)">
                     <span class="material-symbols-outlined text-[20px]">grid_view</span>
                     <span class="text-sm">All Mods</span>
                 </button>
                 @foreach (var cat in _categories)
                 {
-                    <button class="flex items-center gap-3 px-3 py-2 rounded-lg @(SelectedCategory == cat.Name ? "bg-primary/10 text-primary font-medium" : "hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors")" @onclick="() => SelectCategory(cat.Name)">
-                        <span class="material-symbols-outlined text-[20px] text-slate-400">@cat.Icon</span>
+                    <button
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg @(SelectedCategoryId == cat.Id ? "bg-primary/10 text-primary font-bold" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-card-dark transition-colors")"
+                        @onclick="() => SelectCategory(cat.Id)">
+                        <span class="material-symbols-outlined text-[20px]">@cat.Icon</span>
                         <span class="text-sm">@cat.Name</span>
                     </button>
                 }
@@ -22,141 +31,174 @@
         </section>
 
         <section>
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">License Type</h3>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 font-display">Filters</h3>
             <div class="space-y-3 px-1">
-                <label class="flex items-center gap-3 cursor-pointer group">
-                    <input class="rounded border-slate-300 dark:border-slate-700 bg-transparent text-primary focus:ring-primary" type="checkbox" />
-                    <span class="text-sm text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">MIT License</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer group">
-                    <input class="rounded border-slate-300 dark:border-slate-700 bg-transparent text-primary focus:ring-primary" type="checkbox" />
-                    <span class="text-sm text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">GPL-3.0</span>
-                </label>
+                <div class="relative">
+                    <span
+                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+                    <input
+                    class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-card-dark border-none rounded-lg text-sm focus:ring-2 focus:ring-primary font-display"
+                    placeholder="Search mods..." type="text" @bind="_searchQuery" @bind:event="oninput"
+                    @onkeyup="FilterMods" />
+                </div>
             </div>
         </section>
 
-        <div class="mt-auto pt-8 border-t border-slate-200 dark:border-border-dark hidden xl:block">
-            <button class="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:border-primary hover:text-primary transition-all group">
-                <span class="material-symbols-outlined text-[20px] group-hover:rotate-180 transition-transform duration-500">add_circle</span>
+        <div class="mt-auto pt-8 border-t border-slate-200 dark:border-border-dark hidden xl:block font-display">
+            <a href="/dashboard"
+                   class="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 hover:border-primary hover:text-primary transition-all group">
+                <span
+                class="material-symbols-outlined text-[20px] group-hover:rotate-180 transition-transform duration-500">add_circle</span>
                 <span class="text-sm font-bold">Submit a Mod</span>
-            </button>
+            </a>
         </div>
     </aside>
 
     <section class="flex-1 flex flex-col gap-6">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
+            <div class="font-display">
                 <h1 class="text-3xl font-bold tracking-tight">Explore OpenMods</h1>
-                <p class="text-slate-500 dark:text-slate-400 mt-1">Discover, download, and contribute to community-driven projects.</p>
-            </div>
-            <div class="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
-                <div class="flex rounded-lg bg-slate-200 dark:bg-surface-dark p-1">
-                    <button class="p-1.5 rounded bg-white dark:bg-slate-700 shadow-sm text-primary">
-                        <span class="material-symbols-outlined block">grid_view</span>
-                    </button>
-                    <button class="p-1.5 rounded text-slate-500 hover:text-primary">
-                        <span class="material-symbols-outlined block">list</span>
-                    </button>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Discover, download, and contribute to
+                    community-driven projects.</p>
                 </div>
-                <div class="h-8 w-px bg-slate-200 dark:bg-border-dark mx-1 hidden md:block"></div>
-                <button class="flex items-center gap-2 px-3 h-10 rounded-lg bg-slate-200 dark:bg-surface-dark text-sm font-bold whitespace-nowrap">
-                    <span class="material-symbols-outlined text-[20px]">sort</span>
-                    Newest First
-                    <span class="material-symbols-outlined text-[18px]">expand_more</span>
-                </button>
+                <div class="flex items-center gap-3 font-display">
+                    <div class="flex rounded-lg bg-slate-200 dark:bg-card-dark p-1">
+                        <button @onclick='() => _viewMode = "grid"'
+                                class="p-1.5 rounded @(_viewMode == "grid" ? "bg-white dark:bg-slate-700 shadow-sm text-primary" : "text-slate-500 hover:text-primary")">
+                            <span class="material-symbols-outlined block">grid_view</span>
+                        </button>
+                        <button @onclick='() => _viewMode = "list"'
+                                class="p-1.5 rounded @(_viewMode == "list" ? "bg-white dark:bg-slate-700 shadow-sm text-primary" : "text-slate-500 hover:text-primary")">
+                            <span class="material-symbols-outlined block">list</span>
+                        </button>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200 dark:bg-border-dark mx-1 hidden md:block"></div>
+                    <div class="relative group">
+                        <button
+                            class="flex items-center gap-2 px-3 h-10 rounded-lg bg-slate-200 dark:bg-card-dark text-sm font-bold whitespace-nowrap">
+                            <span class="material-symbols-outlined text-[20px]">sort</span>
+                            @(_sortOption)
+                            <span class="material-symbols-outlined text-[18px]">expand_more</span>
+                        </button>
+                        <div
+                            class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark rounded-xl shadow-xl z-50 py-2 hidden group-hover:block">
+                            <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    @onclick='() => SetSort("Newest")'>Newest First</button>
+                            <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    @onclick='() => SetSort("Stars")'>Most Starred</button>
+                            <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    @onclick='() => SetSort("Forks")'>Most Forked</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-            @foreach (var mod in _filteredMods)
+            @if (_isLoading)
             {
-                <ModCard Mod="mod" />
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <div class="bg-card-dark h-80 rounded-xl animate-pulse"></div>
+                    }
+                </div>
             }
-        </div>
-
-        <div class="flex items-center justify-center py-10 border-t border-slate-200 dark:border-border-dark">
-            <div class="flex items-center gap-2">
-                <button class="size-10 rounded-lg flex items-center justify-center border border-slate-200 dark:border-border-dark text-slate-500 hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
-                    <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                <button class="size-10 rounded-lg flex items-center justify-center bg-primary text-white font-bold text-sm">1</button>
-                <button class="size-10 rounded-lg flex items-center justify-center border border-slate-200 dark:border-border-dark text-slate-500 hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
-                    <span class="material-symbols-outlined">chevron_right</span>
-                </button>
+            else if (!_filteredMods.Any())
+            {
+                <div class="flex flex-col items-center justify-center py-24 text-center">
+                    <span class="material-symbols-outlined text-6xl text-slate-700 mb-4">search_off</span>
+                    <h3 class="text-xl font-bold font-display">No mods found</h3>
+                    <p class="text-slate-500 max-w-xs mt-2 font-display">Try adjusting your search or category filters to find
+                        what you're looking for.</p>
+                        <button class="mt-6 text-primary font-bold hover:underline" @onclick="ResetFilters">Clear all
+                            filters</button>
+                        </div>
+                    }
+        else
+                    {
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+                            @foreach (var mod in _filteredMods)
+                            {
+                                <ModCard Mod="mod" />
+                            }
+                        </div>
+                    }
+                </section>
             </div>
-        </div>
-    </section>
-</div>
 
 @code {
-    private string? SelectedCategory { get; set; }
+    private int? SelectedCategoryId { get; set; }
+    private string _searchQuery = "";
+    private string _sortOption = "Newest";
+    private string _viewMode = "grid";
+    private bool _isLoading = true;
+
     private List<Category> _categories = new();
     private List<Mod> _allMods = new();
     private List<Mod> _filteredMods = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _categories = new List<Category>
-        {
-            new Category { Name = "Graphics", Icon = "palette" },
-            new Category { Name = "Gameplay", Icon = "sports_esports" },
-            new Category { Name = "Tools", Icon = "build" },
-            new Category { Name = "UI/HUD", Icon = "dashboard_customize" }
-        };
+        using var context = await DbFactory.CreateDbContextAsync();
+        
+        _categories = await context.Categories.OrderBy(c => c.Name).ToListAsync();
+        
+        _allMods = await context.Mods
+            .Include(m => m.Developer)
+            .Include(m => m.Releases)
+            .Include(m => m.Categories)
+            .OrderByDescending(m => m.CreatedAt)
+            .ToListAsync();
 
-        // Mock data
-        _allMods = new List<Mod>
-        {
-            new Mod { 
-                Name = "HyperRay Raytracing Overhaul", 
-                Stars = 1200, 
-                Forks = 240, 
-                UpdatedAt = DateTime.UtcNow.AddHours(-2),
-                ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBowCrfuoYvIX08K8Cf3XPVZm9PMs7mhfeGuYxyvZgp3ptpkRJsq9FbEna2l0BsedK7QkGpf9_XRdrTkDqVer6-Q-DUsEfyk-vsH0BSI9UNX14NaUPm4axlFwF4UMeRSR9ULVn8fl3Tngf-pAnTMLM2vC2cs9tU2RMHTHrIcvPQrUTSMWomcXWRTeqVT5R6OChofbJ6YnTfSj8fiXzEE2H--z98VruUK5nLh-ATfqevvVjPUliDwkCsnRB3VhbVWy-hBpfrtEhmuUz0",
-                Developer = new Developer { GitHubUsername = "nexus-org", AvatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuDO5mJNjKtdCBq4IVkTBEoMW68sIJC-5BRnV72eb1RAvEi-ReF8M4K7CARIDe8U7BpBCxl4pBnnrqB0_5dWzVlD6zpY-Ogm3tO3EOCq9mmfLJ81QakTO3xoErpv9PwTZYUjiQ2LQ-grggmxTGN-XFSswgwxM2o8TXqDNEVnQCHFaqErrMcvGOeRizhjvyVPXcGyJHZNHaf_Jt2079q_Q0QwtPxImzhn_lsDdop-_-Run8Uw7uWekDfYF8SIYv37elWVbWRKuQJKakOE" },
-                Releases = new List<Release> { new Release { Version = "v2.4.1", ReleasedAt = DateTime.UtcNow.AddDays(-5) } },
-                Categories = new List<Category> { _categories[0] }
-            },
-            new Mod { 
-                Name = "Advanced NPC Logic Core", 
-                Stars = 843, 
-                Forks = 156, 
-                UpdatedAt = DateTime.UtcNow.AddHours(-1),
-                ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuCbmjXu3Gxn8uK7CVLTHSWxP4hGrd8yzFYRCqlt4GipWV_8r_P1Mo7BeXk74kklrfndKDQWK-be2ccu5IvJwtoFvB-HCcumFqkjOHVNSRD4mAYQEKWiCv_NYzPmMysFfIPahMZMv5q_FxqEZVZUf0be4G4gbVBtq-heY6XRdha-MadlYfNUZtYsKzw-QMjq6SqqYw5_C-l2VpRGAMd2RdaKpfiVb6VpdcWnuVYwJOTZYGkYbaC1voo6G79wzLU3UYRDygdwOUJfYIlj",
-                Developer = new Developer { GitHubUsername = "ai-research", AvatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBIFmNp8BeomelhmUGy2lPkm-Vm9lL1qPvoKMix2pSn5HmqPF5rhUdcnkH44kqM1ypUdBIQEj34Q4Zna1JTmXmWq8kM2XO7uccivRbhiit0PiiaeZZErzxzYrybR6ebGGRYZ92iFHDxxEd29no2XL7d0BXWITJ0sIRWGjbIYS3YB55Ff-4bN_xA3gHe4woPtN38xi_oohjbxfecM3jyaSjyUfhUdXVuBv9W32ZyU1BWVgzTHA5NkyTmk9mRg1_VVZMQatfAxsnn7mjd" },
-                Releases = new List<Release> { new Release { Version = "v0.9.8", ReleasedAt = DateTime.UtcNow.AddDays(-10) } },
-                Categories = new List<Category> { _categories[1] }
-            },
-            new Mod { 
-                Name = "ModManager Toolkit Pro", 
-                Stars = 5600, 
-                Forks = 1200, 
-                UpdatedAt = DateTime.UtcNow.AddDays(-1),
-                ImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuD-70WAeSMpe-iljbQ9uSJCJA8Dwj6JLOgCPunvtt4lFMMX7b6fJ7M-tDlnfNgPr2lMaYFlzVzNs6mcw3XoLgoaGoYPHtm1qIbSTA5VzC9gV6U2OukXPiprBVkAZ3QGwjj7OwvZiKsdMPfmK6VsYreEd-8fQTiP_okm_ZGuvEzHAIQ4Qjk48ILRY9n3ehOrskSO3yk6NQaOVjMsetS6ZcCnmWjLaOFc6rLNiRPTUCLpoZbhk3z7sX_TlTtuTyjaRuc_xwYrJFvzWnBn",
-                Developer = new Developer { GitHubUsername = "open-tools", AvatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuCuX8A-neq14MXmXRIYEq7iFmumurg6WMPHwEa6XP8Q8JHndmJ2vqUVu_-sYS9CCEoMm9d4qt9upaPhL8ECV97xDmZrPJnZd92H8T2ywDXKUoyEYICUs4hvOAjW2F0P2p565djSiaK3hDPh2XM-8VnOY6ZG9lkFwpWYAi2s2hMV2Hk34a061n76NhdDnHcPEKlwjfMYzXmYYQAMpf4wZP4H5phSpHupqSrGldAuCBMkTXtairwMu2fdYn-Hs1gutv0NEFqESRW5oDhL" },
-                Releases = new List<Release> { new Release { Version = "v4.0.0", ReleasedAt = DateTime.UtcNow.AddDays(-2) } },
-                Categories = new List<Category> { _categories[2] }
-            }
-        };
-
+        _isLoading = false;
         FilterMods();
     }
 
-    private void SelectCategory(string? category)
+    private void SelectCategory(int? categoryId)
     {
-        SelectedCategory = category;
+        SelectedCategoryId = categoryId;
+        FilterMods();
+    }
+
+    private void SetSort(string sort)
+    {
+        _sortOption = sort;
+        FilterMods();
+    }
+
+    private void ResetFilters()
+    {
+        _searchQuery = "";
+        SelectedCategoryId = null;
         FilterMods();
     }
 
     private void FilterMods()
     {
-        if (string.IsNullOrEmpty(SelectedCategory))
+        var query = _allMods.AsEnumerable();
+
+        // 1. Category Filter
+        if (SelectedCategoryId != null)
         {
-            _filteredMods = _allMods;
+            query = query.Where(m => m.Categories.Any(c => c.Id == SelectedCategoryId));
         }
-        else
+
+        // 2. Search Filter
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
         {
-            _filteredMods = _allMods.Where(m => m.Categories.Any(c => c.Name == SelectedCategory)).ToList();
+            var search = _searchQuery.ToLower();
+            query = query.Where(m =>
+                m.Name.ToLower().Contains(search) ||
+                (m.Description != null && m.Description.ToLower().Contains(search)));
         }
+
+        // 3. Sorting
+        query = _sortOption switch
+        {
+            "Stars" => query.OrderByDescending(m => m.Stars),
+            "Forks" => query.OrderByDescending(m => m.Forks),
+            _ => query.OrderByDescending(m => m.CreatedAt)
+        };
+
+        _filteredMods = query.ToList();
     }
 }
