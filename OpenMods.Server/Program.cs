@@ -13,7 +13,7 @@ if (File.Exists(envPath))
 {
     DotNetEnv.Env.Load(envPath);
 }
-else 
+else
 {
     // Try parent directory (useful when running from bin folder)
     envPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory())?.FullName ?? "", ".env");
@@ -25,14 +25,21 @@ else
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Support for Koyeb/Docker dynamic port
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8000";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+// Support for Koyeb/Docker dynamic port (Skip in local dev to let VS manage HTTPS)
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port) && !builder.Environment.IsDevelopment())
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+else if (!string.IsNullOrEmpty(port))
+{
+    Console.WriteLine($"[DEBUG] Local development detected, ignoring PORT env var: {port} to allow VS launchSettings.json to work.");
+}
 
 // Diagnostic logging for environment
 Console.WriteLine($"[DEBUG] SUPABASE_URL: {Environment.GetEnvironmentVariable("SUPABASE_URL")}");
 Console.WriteLine($"[DEBUG] APP_URL: {Environment.GetEnvironmentVariable("APP_URL")}");
-Console.WriteLine($"[DEBUG] PORT: {port}");
+if (!string.IsNullOrEmpty(port)) Console.WriteLine($"[DEBUG] PORT OVERRIDE: {port}");
 
 // Add services to the container.
 builder.Services.AddDataProtection()
@@ -42,8 +49,10 @@ builder.Services.AddDataProtection()
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
-    options.KnownNetworks.Clear();
+    // Trust all proxies in container environment
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
+    options.ForwardLimit = null; // Handle multiple proxy hops
 });
 
 builder.Services.AddScoped<AuthService>();
@@ -86,12 +95,8 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 
-// Disable HTTPS redirection when running in Docker/Koyeb (which usually handle SSL at the edge)
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true" && 
-    string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KOYEB_APP_ID")))
-{
-    app.UseHttpsRedirection();
-}
+// Enforce HTTPS redirection
+app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
