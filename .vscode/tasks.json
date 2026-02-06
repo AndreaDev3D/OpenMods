@@ -1,0 +1,71 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/OpenMods.Server/OpenMods.Server.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "publish",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/OpenMods.Server/OpenMods.Server.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "watch",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "--project",
+                "${workspaceFolder}/OpenMods.Server/OpenMods.Server.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "docker-build",
+            "type": "shell",
+            "command": "docker build -t openmods:latest .",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "docker-stop",
+            "type": "shell",
+            "command": "docker stop openmods 2>$null; docker rm openmods 2>$null; echo 'Cleaned up old containers'",
+            "presentation": {
+                "reveal": "never"
+            }
+        },
+        {
+            "label": "docker-run",
+            "type": "shell",
+            "command": "docker run -d -p 8000:8000 --name openmods --env-file .env openmods:latest",
+            "dependsOn": [
+                "docker-build",
+                "docker-stop"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}
