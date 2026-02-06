@@ -25,7 +25,7 @@
 
     private async Task HandleAuthCallback()
     {
-        try 
+        try
         {
             var uri = Nav.ToAbsoluteUri(Nav.Uri);
             if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("code", out var code))
@@ -47,11 +47,15 @@
                     Logger.LogInformation("Session established for {Email}", session.User?.Email);
                     
                     // Persist session to cookie so it survives reloads/redirects
-                    var sessionJson = Newtonsoft.Json.JsonConvert.SerializeObject(new { 
-                        access_token = session.AccessToken, 
-                        refresh_token = session.RefreshToken 
+                    var sessionJson = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                    {
+                        access_token = session.AccessToken,
+                        refresh_token = session.RefreshToken
                     });
-                    await JS.InvokeVoidAsync("setCookie", "supabase_session", sessionJson, 7);
+                    
+                    // Base64 encode to prevent cookie parsing issues with special characters
+                    var base64Session = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(sessionJson));
+                    await JS.InvokeVoidAsync("setCookie", "supabase_session", base64Session, 7);
                     
                     // Clear the verifier
                     await JS.InvokeVoidAsync("sessionStorage.removeItem", "supabase_pkce_verifier");
