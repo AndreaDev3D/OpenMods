@@ -65,21 +65,37 @@
 @inject Client SupabaseClient
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject ILogger<Navbar> Logger
 
 @code {
     private async Task HandleLogin()
     {
-        var result = await SupabaseClient.Auth.SignIn(Supabase.Gotrue.Constants.Provider.Github, new Supabase.Gotrue.SignInOptions
+        try 
         {
-            RedirectTo = Nav.BaseUri + "auth/callback",
-            FlowType = Supabase.Gotrue.Constants.OAuthFlowType.PKCE
-        });
-        
-        if (result.Uri != null)
+            Logger.LogInformation("Starting login process...");
+            var result = await SupabaseClient.Auth.SignIn(Supabase.Gotrue.Constants.Provider.Github, new Supabase.Gotrue.SignInOptions
+            {
+                RedirectTo = Nav.BaseUri + "auth/callback",
+                FlowType = Supabase.Gotrue.Constants.OAuthFlowType.PKCE
+            });
+            
+            if (result.Uri != null)
+            {
+                Logger.LogInformation("Login URI generated: {Uri}", result.Uri);
+                // Store PKCE verifier for the callback
+                await JS.InvokeVoidAsync("sessionStorage.setItem", "supabase_pkce_verifier", result.PKCEVerifier);
+                Logger.LogInformation("Redirecting to Supabase...");
+                Nav.NavigateTo(result.Uri.ToString(), true);
+            }
+            else 
+            {
+                Logger.LogWarning("Login result URI is null");
+            }
+        }
+        catch (Exception ex)
         {
-            // Store PKCE verifier for the callback
-            await JS.InvokeVoidAsync("sessionStorage.setItem", "supabase_pkce_verifier", result.PKCEVerifier);
-            Nav.NavigateTo(result.Uri.ToString(), true);
+            Logger.LogError(ex, "Crash during HandleLogin");
+            throw; // Rethrow to see in UI if DetailedErrors is on
         }
     }
 

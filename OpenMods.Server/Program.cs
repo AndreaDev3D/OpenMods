@@ -1,15 +1,42 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 using OpenMods.Server.Services;
 using OpenMods.Server.Components;
 using OpenMods.Server.Data;
 
 // Load environment variables from .env file
-DotNetEnv.Env.Load();
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+if (File.Exists(envPath))
+{
+    DotNetEnv.Env.Load(envPath);
+}
+else 
+{
+    // Try parent directory (useful when running from bin folder)
+    envPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory())?.FullName ?? "", ".env");
+    if (File.Exists(envPath))
+    {
+        DotNetEnv.Env.Load(envPath);
+    }
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Support for Koyeb/Docker dynamic port
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
+// Diagnostic logging for environment
+Console.WriteLine($"URL: {Environment.GetEnvironmentVariable("SUPABASE_URL")}");
+Console.WriteLine($"Key length: {Environment.GetEnvironmentVariable("SUPABASE_ANON_KEY")?.Length ?? 0}");
+Console.WriteLine($"Conn string length: {Environment.GetEnvironmentVariable("CONNECTION_STRING")?.Length ?? 0}");
+
 // Add services to the container.
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Directory.GetCurrentDirectory(), "keys")));
+
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuthenticationStateProvider, SupabaseAuthStateProvider>();
 builder.Services.AddAuthentication("Supabase")
@@ -33,7 +60,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(options => options.DetailedErrors = true);
 
 var app = builder.Build();
 
@@ -45,7 +72,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+
+// Disable HTTPS redirection when running in Docker/Koyeb (which usually handle SSL at the edge)
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true" && 
+    string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KOYEB_APP_ID")))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAntiforgery();
 
