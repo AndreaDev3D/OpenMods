@@ -281,6 +281,9 @@
     {
         var query = _allMods.AsEnumerable();
 
+        // Security: Never show archived mods in explorer
+        query = query.Where(m => !m.IsArchived);
+
         // 1. Category Filter
         if (SelectedCategoryId != null)
         {

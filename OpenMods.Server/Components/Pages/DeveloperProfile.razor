@@ -215,7 +215,7 @@ else
                                                                         <div class="flex justify-between items-center">
                                                                             <span class="text-slate-500 dark:text-[#92a4c9] text-sm">Avg Mod Stars</span>
                                                                             <span class="text-slate-900 dark:text-white text-sm font-bold">@(_developer.Mods.Any() ?
-                                                                                                                (_totalStars / (double)_developer.Mods.Count).ToString("F1") : "0.0")</span>
+                                                                                                                                                                                                (_totalStars / (double)_developer.Mods.Count).ToString("F1") : "0.0")</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -250,6 +250,8 @@ else
 
         if (_developer != null)
         {
+            // Owner check for visibility? For now, public hide
+            _developer.Mods = _developer.Mods.Where(m => !m.IsArchived).ToList();
             _totalStars = _developer.Mods.Sum(m => m.Stars);
         }
 

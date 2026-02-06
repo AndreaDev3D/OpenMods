@@ -2,7 +2,11 @@
 @using OpenMods.Server.Models
 @using OpenMods.Server.Data
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>@(_mod?.Name ?? "Loading...") | OpenMods</PageTitle>
 
@@ -23,146 +27,228 @@ else
             <span class="text-white">@_mod.Name</span>
         </nav>
 
-        <div
-            class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pb-8 border-b border-border-dark font-display">
-            <div class="flex gap-6 items-center">
-                <div
-                    class="size-24 rounded-xl bg-card-dark border border-border-dark flex items-center justify-center overflow-hidden">
+        @if (_mod.IsArchived)
+        {
+            <div class="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3">
+                <span class="material-symbols-outlined text-amber-500">archive</span>
+                <div class="flex-1">
+                    <p class="text-amber-500 font-bold text-sm">This mod is archived</p>
+                    <p class="text-amber-500/70 text-xs">It is hidden from the public Explorer and will no longer receive
+                        updates.</p>
+                    </div>
+                    @if (_isOwner)
+                    {
+                        <button @onclick="HandleArchive"
+                                class="px-3 py-1 bg-amber-500 text-black text-xs font-bold rounded hover:brightness-110">Restore</button>
+                    }
+                </div>
+            }
+
+            <div
+                class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pb-8 border-b border-border-dark font-display">
+                <div class="flex gap-6 items-center">
                     <div
-                        class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-5xl text-primary">auto_awesome</span>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-3xl font-bold tracking-tight">@_mod.Name</h1>
-                        <span
-                        class="px-2 py-0.5 bg-primary/20 text-primary rounded text-xs font-bold uppercase tracking-wider">@LatestVersion</span>
-                    </div>
-                    <div class="flex items-center gap-4 mt-2 text-[#92a4c9]">
-                        <div class="flex items-center gap-2">
-                            <div class="size-6 rounded-full bg-cover"
-                                 style="background-image: url('@_mod.Developer?.AvatarUrl')"></div>
-                            <span class="text-sm">by <span
-                                class="text-white font-medium">@_mod.Developer?.DisplayName</span></span>
-                            </div>
-                            <span class="text-border-dark">|</span>
-                            <a class="flex items-center gap-1.5 hover:text-white transition-colors" href="@_mod.GitHubRepoUrl"
-                                   target="_blank">
-                                <span class="material-symbols-outlined text-sm">link</span>
-                                <span class="text-sm">@_mod.GitHubRepoUrl?.Replace("https://", "")</span>
-                            </a>
+                        class="size-24 rounded-xl bg-card-dark border border-border-dark flex items-center justify-center overflow-hidden">
+                        <div
+                            class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-5xl text-primary">auto_awesome</span>
                         </div>
                     </div>
-                </div>
-                <div class="flex gap-3">
-                    <button
-                        class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold hover:bg-border-dark transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">star</span> Star @FormatCount(_mod.Stars)
-                    </button>
-                    <button
-                        class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold hover:bg-border-dark transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">fork_right</span> Fork @FormatCount(_mod.Forks)
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                <div class="lg:col-span-8">
-                    <div
-                        class="bg-card-dark/30 rounded-xl border border-border-dark p-8 markdown-body font-body text-slate-300">
-                        <div class="flex items-center gap-3 mb-8 text-[#92a4c9] pb-4 border-b border-border-dark font-display">
-                            <span class="material-symbols-outlined text-[20px]">description</span>
-                            <span class="text-sm font-medium">README.md</span>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-3xl font-bold tracking-tight">@_mod.Name</h1>
+                            <span
+                            class="px-2 py-0.5 bg-primary/20 text-primary rounded text-xs font-bold uppercase tracking-wider">@LatestVersion</span>
                         </div>
-                    
-                        <div class="prose prose-invert max-w-none">
-                            @((MarkupString)_mod.LongDescription!)
-                        </div>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-4 space-y-6 font-display">
-                    <div class="bg-card-dark border border-border-dark rounded-xl p-6">
-                        <button
-                            class="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary/90 py-4 rounded-lg font-bold text-white transition-all mb-4 shadow-lg shadow-primary/20">
-                            <span class="material-symbols-outlined">download</span>
-                            Download Latest Release
-                        </button>
-                        <a href="@_mod.GitHubRepoUrl" target="_blank"
-                               class="w-full flex items-center justify-center gap-3 bg-transparent border border-border-dark hover:bg-border-dark py-3 rounded-lg font-bold text-[#92a4c9] hover:text-white transition-all text-center">
-                            <span class="material-symbols-outlined">visibility</span>
-                            View on GitHub
-                        </a>
-                    </div>
-
-                    <div class="bg-card-dark border border-border-dark rounded-xl p-6">
-                        <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9] mb-4">Project Metadata</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
-                                <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
-                                    <span class="material-symbols-outlined text-sm">star</span>
-                                    <span class="text-xs font-medium">Stars</span>
+                        <div class="flex items-center gap-4 mt-2 text-[#92a4c9]">
+                            <div class="flex items-center gap-2">
+                                <div class="size-6 rounded-full bg-cover"
+                                     style="background-image: url('@_mod.Developer?.AvatarUrl')"></div>
+                                <span class="text-sm">by <span
+                                    class="text-white font-medium">@_mod.Developer?.GitHubUsername</span></span>
                                 </div>
-                                <p class="text-lg font-bold">@FormatCount(_mod.Stars)</p>
-                            </div>
-                            <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
-                                <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
-                                    <span class="material-symbols-outlined text-sm">fork_right</span>
-                                    <span class="text-xs font-medium">Forks</span>
-                                </div>
-                                <p class="text-lg font-bold">@FormatCount(_mod.Forks)</p>
+                                <span class="text-border-dark">|</span>
+                                <a class="flex items-center gap-1.5 hover:text-white transition-colors" href="@_mod.GitHubRepoUrl"
+                                       target="_blank">
+                                    <span class="material-symbols-outlined text-sm">link</span>
+                                    <span class="text-sm">@_mod.GitHubRepoUrl?.Replace("https://", "")</span>
+                                </a>
                             </div>
                         </div>
                     </div>
-
-                    <div class="bg-card-dark border border-border-dark rounded-xl p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9]">Versions</h3>
-                            <a class="text-primary text-xs font-bold hover:underline" href="#">View All</a>
-                        </div>
-                        <div class="space-y-4">
-                            @foreach (var release in _mod.Releases.OrderByDescending(r => r.ReleasedAt))
-                            {
-                                <div class="flex items-center justify-between group cursor-pointer">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="size-2 rounded-full @(release == _mod.Releases.OrderByDescending(r => r.ReleasedAt).First() ? "bg-green-500" : "bg-border-dark")">
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-bold group-hover:text-primary transition-colors">
-                                                @release.Version
-                                                @if (release == _mod.Releases.OrderByDescending(r => r.ReleasedAt).First())
-                                                {
-                                                    <span
-                                                    class="text-[10px] ml-2 font-normal px-1.5 py-0.5 bg-primary/20 text-primary rounded">LATEST</span>
-                                                }
-                                            </p>
-                                            <p class="text-xs text-[#92a4c9]">Released @TimeAgo(release.ReleasedAt)</p>
-                                        </div>
-                                    </div>
-                                    <span
-                                    class="material-symbols-outlined text-[#92a4c9] group-hover:text-white text-xl">download</span>
+                    <div class="flex flex-wrap gap-3">
+                        @if (_isOwner)
+                        {
+                            <div class="flex gap-2 mr-4 pr-4 border-r border-border-dark">
+                                <button @onclick="HandleArchive"
+                                        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-500 text-sm font-bold hover:bg-amber-500/20 transition-all">
+                                    <span class="material-symbols-outlined text-[18px]">@( _mod.IsArchived ? "unarchive" :
+                                                                                                                                           "archive")</span>
+                                        <span>@( _mod.IsArchived ? "Restore" : "Archive")</span>
+                                    </button>
+                                    <button @onclick="HandleDelete"
+                                            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/50 bg-red-500/10 text-red-500 text-sm font-bold hover:bg-red-500/20 transition-all">
+                                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                                        <span>Delete</span>
+                                    </button>
                                 </div>
                             }
+                            <button
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold hover:bg-border-dark transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">star</span> Star @FormatCount(_mod.Stars)
+                            </button>
+                            <button
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold hover:bg-border-dark transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">fork_right</span> Fork @FormatCount(_mod.Forks)
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </main>
-    }
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                        <div class="lg:col-span-8">
+                            <div
+                                class="bg-card-dark/30 rounded-xl border border-border-dark p-8 markdown-body font-body text-slate-300">
+                                <div class="flex items-center gap-3 mb-8 text-[#92a4c9] pb-4 border-b border-border-dark font-display">
+                                    <span class="material-symbols-outlined text-[20px]">description</span>
+                                    <span class="text-sm font-medium">README.md</span>
+                                </div>
+                
+                                <div class="prose prose-invert max-w-none">
+                                    @((MarkupString)_mod.LongDescription!)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-4 space-y-6 font-display">
+                            <div class="bg-card-dark border border-border-dark rounded-xl p-6">
+                                <button
+                                    class="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary/90 py-4 rounded-lg font-bold text-white transition-all mb-4 shadow-lg shadow-primary/20">
+                                    <span class="material-symbols-outlined">download</span>
+                                    Download Latest Release
+                                </button>
+                                <a href="@_mod.GitHubRepoUrl" target="_blank"
+                                       class="w-full flex items-center justify-center gap-3 bg-transparent border border-border-dark hover:bg-border-dark py-3 rounded-lg font-bold text-[#92a4c9] hover:text-white transition-all text-center">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                    View on GitHub
+                                </a>
+                            </div>
+
+                            <div class="bg-card-dark border border-border-dark rounded-xl p-6">
+                                <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9] mb-4">Project Metadata</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
+                                        <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
+                                            <span class="material-symbols-outlined text-sm">star</span>
+                                            <span class="text-xs font-medium">Stars</span>
+                                        </div>
+                                        <p class="text-lg font-bold">@FormatCount(_mod.Stars)</p>
+                                    </div>
+                                    <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
+                                        <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
+                                            <span class="material-symbols-outlined text-sm">fork_right</span>
+                                            <span class="text-xs font-medium">Forks</span>
+                                        </div>
+                                        <p class="text-lg font-bold">@FormatCount(_mod.Forks)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-card-dark border border-border-dark rounded-xl p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9]">Versions</h3>
+                                    <a class="text-primary text-xs font-bold hover:underline" href="#">View All</a>
+                                </div>
+                                <div class="space-y-4">
+                                    @foreach (var release in _mod.Releases.OrderByDescending(r => r.ReleasedAt))
+                                    {
+                                        <div class="flex items-center justify-between group cursor-pointer">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="size-2 rounded-full @(release == _mod.Releases.OrderByDescending(r => r.ReleasedAt).First() ? "bg-green-500" : "bg-border-dark")">
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm font-bold group-hover:text-primary transition-colors">
+                                                        @release.Version
+                                                        @if (release == _mod.Releases.OrderByDescending(r => r.ReleasedAt).First())
+                                                        {
+                                                            <span
+                                                            class="text-[10px] ml-2 font-normal px-1.5 py-0.5 bg-primary/20 text-primary rounded">LATEST</span>
+                                                        }
+                                                    </p>
+                                                    <p class="text-xs text-[#92a4c9]">Released @TimeAgo(release.ReleasedAt)</p>
+                                                </div>
+                                            </div>
+                                            <span
+                                            class="material-symbols-outlined text-[#92a4c9] group-hover:text-white text-xl">download</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            }
 
 @code {
     [Parameter] public int Id { get; set; }
     private Mod? _mod;
+    private bool _isOwner = false;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadMod();
+    }
+
+    private async Task LoadMod()
     {
         using var context = await DbFactory.CreateDbContextAsync();
         _mod = await context.Mods
             .Include(m => m.Developer)
             .Include(m => m.Releases)
             .FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (_mod != null)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            _isOwner = user.Identity?.IsAuthenticated == true &&
+                      user.Identity.Name?.ToLower() == _mod.Developer?.GitHubUsername?.ToLower();
+        }
+    }
+
+    private async Task HandleArchive()
+    {
+        if (_mod == null || !_isOwner) return;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+        var mod = await context.Mods.FindAsync(Id);
+        if (mod != null)
+        {
+            mod.IsArchived = !mod.IsArchived;
+            await context.SaveChangesAsync();
+            _mod.IsArchived = mod.IsArchived; // Update local state for UI
+        }
+    }
+
+    private async Task HandleDelete()
+    {
+        if (_mod == null || !_isOwner) return;
+
+        // Simple confirmation via JS (could be a better Modal later)
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you absolutely sure you want to delete '{_mod.Name}'? This action cannot be undone.");
+        if (!confirmed) return;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+        var mod = await context.Mods
+            .Include(m => m.Releases)
+            .FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (mod != null)
+        {
+            context.Mods.Remove(mod);
+            await context.SaveChangesAsync();
+            Nav.NavigateTo("/explore");
+        }
     }
 
     private string LatestVersion => _mod?.Releases.MaxBy(r => r.ReleasedAt)?.Version ?? "v0.0.0";
