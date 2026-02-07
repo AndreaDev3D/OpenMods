@@ -150,7 +150,7 @@
                             <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
                                     @onclick='() => SetSort("Stars")'>Most Starred</button>
                             <button class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
-                                    @onclick='() => SetSort("Forks")'>Most Forked</button>
+                                    @onclick='() => SetSort("Views")'>Most Viewed</button>
                         </div>
                     </div>
                 </div>
@@ -367,7 +367,7 @@
         query = _sortOption switch
         {
             "Stars" => query.OrderByDescending(m => m.Stars),
-            "Forks" => query.OrderByDescending(m => m.Forks),
+            "Views" => query.OrderByDescending(m => m.Views),
             _ => query.OrderByDescending(m => m.CreatedAt)
         };
 

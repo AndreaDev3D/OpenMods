@@ -125,7 +125,7 @@ else
                             </button>
                             <button
                                 class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold hover:bg-border-dark transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">fork_right</span> Fork @FormatCount(_mod.Forks)
+                                <span class="material-symbols-outlined text-[18px]">visibility</span> @_mod.Views.ToString("N0") Views
                             </button>
                         </div>
                     </div>
@@ -171,10 +171,10 @@ else
                             </div>
                             <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
                                 <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
-                                    <span class="material-symbols-outlined text-sm">fork_right</span>
-                                    <span class="text-xs font-medium">Forks</span>
+                                    <span class="material-symbols-outlined text-sm">visibility</span>
+                                    <span class="text-xs font-medium">Views</span>
                                 </div>
-                                <p class="text-lg font-bold">@FormatCount(_mod.Forks)</p>
+                                <p class="text-lg font-bold">@FormatCount(_mod.Views)</p>
                             </div>
                         </div>
 
@@ -359,6 +359,13 @@ else
             .Include(m => m.Releases)
                 .ThenInclude(r => r.Assets)
             .FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (_mod != null)
+        {
+            // Increment views
+            _mod.Views++;
+            await context.SaveChangesAsync();
+        }
 
         if (_mod != null && _expandedVersionId == null)
         {

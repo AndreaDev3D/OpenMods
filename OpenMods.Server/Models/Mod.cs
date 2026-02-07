@@ -27,7 +27,7 @@ public class Mod
     public List<string>? Tags { get; set; } = new();
 
     public int Stars { get; set; }
-    public int Forks { get; set; }
+    public int Views { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
