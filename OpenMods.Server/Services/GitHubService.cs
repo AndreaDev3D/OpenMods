@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using OpenMods.Server.Models;
 using Markdig;
 using System.Text;
@@ -112,10 +113,64 @@ public class GitHubService
             return null;
         }
     }
+
+    public async Task<List<GitHubRelease>> GetReleases(string fullName)
+    {
+        if (string.IsNullOrEmpty(fullName)) return new List<GitHubRelease>();
+
+        try
+        {
+            var response = await _httpClient.GetAsync($"https://api.github.com/repos/{fullName}/releases");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var releases = JsonSerializer.Deserialize<List<GitHubRelease>>(content, _jsonOptions);
+                return releases ?? new List<GitHubRelease>();
+            }
+
+            _logger.LogWarning("Failed to fetch releases for {FullName}: {StatusCode}", fullName, response.StatusCode);
+            return new List<GitHubRelease>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching releases for {FullName}", fullName);
+            return new List<GitHubRelease>();
+        }
+    }
 }
 
 public class GitHubReadme
 {
     public string Content { get; set; } = string.Empty;
     public string Encoding { get; set; } = string.Empty;
+}
+
+public class GitHubRelease
+{
+    [JsonPropertyName("tag_name")]
+    public string TagName { get; set; } = string.Empty;
+    
+    public string Name { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
+    
+    [JsonPropertyName("published_at")]
+    public DateTime PublishedAt { get; set; }
+    
+    [JsonPropertyName("html_url")]
+    public string HtmlUrl { get; set; } = string.Empty;
+    
+    public List<GitHubAsset> Assets { get; set; } = new();
+}
+
+public class GitHubAsset
+{
+    public string Name { get; set; } = string.Empty;
+    public long Size { get; set; }
+    
+    [JsonPropertyName("browser_download_url")]
+    public string BrowserDownloadUrl { get; set; } = string.Empty;
+    
+    [JsonPropertyName("content_type")]
+    public string ContentType { get; set; } = string.Empty;
 }

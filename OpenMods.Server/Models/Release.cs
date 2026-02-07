@@ -14,9 +14,12 @@ public class Release
     
     public string? DownloadUrl { get; set; }
     
+    public string? HtmlUrl { get; set; }
+    
     public string? Changelog { get; set; }
     
     public DateTime ReleasedAt { get; set; } = DateTime.UtcNow;
 
+    public List<ReleaseAsset> Assets { get; set; } = new();
     public List<Game> SupportedGames { get; set; } = new();
 }

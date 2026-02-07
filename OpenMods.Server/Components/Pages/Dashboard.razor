@@ -333,11 +333,80 @@
                 mod.LongDescription = readmeHtml;
             }
 
+            // Sync Releases
+            var githubReleases = await Github.GetReleases(fullName);
+            if (githubReleases.Any())
+            {
+                using var context = await DbFactory.CreateDbContextAsync();
+                
+                // Get existing releases to avoid duplicates
+                var existingReleases = await context.Releases
+                    .Include(r => r.Assets)
+                    .Where(r => r.ModId == mod.Id)
+                    .ToListAsync();
+
+                // Cleanup placeholder release if it exists and we have real releases
+                var placeholder = existingReleases.FirstOrDefault(r => r.Version == "v1.0.0" && string.IsNullOrEmpty(r.HtmlUrl));
+                if (placeholder != null)
+                {
+                    context.Releases.Remove(placeholder);
+                    existingReleases.Remove(placeholder);
+                }
+
+                foreach (var ghRelease in githubReleases)
+                {
+                    // Use TagName as the Version
+                    var release = existingReleases.FirstOrDefault(r => r.Version == ghRelease.TagName);
+                    if (release == null)
+                    {
+                        release = new Release
+                        {
+                            ModId = mod.Id,
+                            Version = ghRelease.TagName,
+                            ReleasedAt = ghRelease.PublishedAt,
+                            HtmlUrl = ghRelease.HtmlUrl,
+                        };
+                        context.Releases.Add(release);
+                    }
+                    else
+                    {
+                        release.ReleasedAt = ghRelease.PublishedAt;
+                        release.HtmlUrl = ghRelease.HtmlUrl;
+                    }
+
+                    // Sync Assets
+                    foreach (var ghAsset in ghRelease.Assets)
+                    {
+                        var asset = release.Assets.FirstOrDefault(a => a.Name == ghAsset.Name);
+                        if (asset == null)
+                        {
+                            asset = new ReleaseAsset
+                            {
+                                Name = ghAsset.Name,
+                                Size = ghAsset.Size,
+                                DownloadUrl = ghAsset.BrowserDownloadUrl,
+                                ContentType = ghAsset.ContentType
+                            };
+                            release.Assets.Add(asset);
+                        }
+                        else
+                        {
+                            asset.Size = ghAsset.Size;
+                            asset.DownloadUrl = ghAsset.BrowserDownloadUrl;
+                            asset.ContentType = ghAsset.ContentType;
+                        }
+                    }
+                }
+                await context.SaveChangesAsync();
+            }
+
             mod.UpdatedAt = DateTime.UtcNow;
 
-            using var context = await DbFactory.CreateDbContextAsync();
-            context.Mods.Update(mod);
-            await context.SaveChangesAsync();
+            using (var context = await DbFactory.CreateDbContextAsync())
+            {
+                context.Mods.Update(mod);
+                await context.SaveChangesAsync();
+            }
             
             Console.WriteLine($"[DEBUG] Successfully synced {mod.Name}. README length: {mod.LongDescription?.Length ?? 0}");
             

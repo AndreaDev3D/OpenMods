@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Developer> Developers => Set<Developer>();
     public DbSet<Mod> Mods => Set<Mod>();
     public DbSet<Release> Releases => Set<Release>();
+    public DbSet<ReleaseAsset> ReleaseAssets => Set<ReleaseAsset>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Game> Games => Set<Game>();
 
