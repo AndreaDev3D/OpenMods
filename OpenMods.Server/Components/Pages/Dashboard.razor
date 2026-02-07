@@ -266,23 +266,14 @@
             mod.Categories.Add(dbCategory);
         }
         
-        // 3. Create Initial Release and Link Games
-        var initialRelease = new Release
-        {
-            Version = "v1.0.0",
-            ReleasedAt = DateTime.UtcNow
-        };
-
         if (metadata.SelectedGameIds != null && metadata.SelectedGameIds.Any())
         {
             var selectedGames = await context.Games
                 .Where(g => metadata.SelectedGameIds.Contains(g.Id))
                 .ToListAsync();
-            initialRelease.SupportedGames.AddRange(selectedGames);
+            mod.SupportedGames.AddRange(selectedGames);
         }
 
-        mod.Releases.Add(initialRelease);
-        
         context.Mods.Add(mod);
         await context.SaveChangesAsync();
 
@@ -344,14 +335,6 @@
                     .Include(r => r.Assets)
                     .Where(r => r.ModId == mod.Id)
                     .ToListAsync();
-
-                // Cleanup placeholder release if it exists and we have real releases
-                var placeholder = existingReleases.FirstOrDefault(r => r.Version == "v1.0.0" && string.IsNullOrEmpty(r.HtmlUrl));
-                if (placeholder != null)
-                {
-                    context.Releases.Remove(placeholder);
-                    existingReleases.Remove(placeholder);
-                }
 
                 foreach (var ghRelease in githubReleases)
                 {

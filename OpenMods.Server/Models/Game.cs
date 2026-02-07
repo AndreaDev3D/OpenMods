@@ -14,4 +14,5 @@ public class Game
     public string? Description { get; set; }
 
     public List<Release> Releases { get; set; } = new();
+    public List<Mod> Mods { get; set; } = new();
 }

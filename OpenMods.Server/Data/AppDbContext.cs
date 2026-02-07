@@ -34,6 +34,10 @@ public class AppDbContext : DbContext
             .HasMany(r => r.SupportedGames)
             .WithMany(g => g.Releases);
 
+        modelBuilder.Entity<Mod>()
+            .HasMany(m => m.SupportedGames)
+            .WithMany(g => g.Mods);
+
         modelBuilder.Entity<Game>().HasData(
             new Game { Id = 1, Name = "Aether Protocol", ImageUrl = "https://images.unsplash.com/photo-1582125032515-3850559e3549?auto=format&fit=crop&q=80&w=800", Description = "Sci-fi Sandbox" },
             new Game { Id = 2, Name = "Neon Horizon", ImageUrl = "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800", Description = "Cyberpunk RPG" },

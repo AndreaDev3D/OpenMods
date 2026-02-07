@@ -195,8 +195,7 @@ else
                                 <div class="grid grid-cols-2 gap-2 bg-[#1a1e2b] p-3 rounded-lg border border-[#232a3b]">
                                     @foreach (var game in _allGames)
                                     {
-                                        var latestRelease = _mod.Releases.OrderByDescending(r => r.ReleasedAt).FirstOrDefault();
-                                        bool isSupported = latestRelease?.SupportedGames.Any(g => g.Id == game.Id) ?? false;
+                                        bool isSupported = _mod.SupportedGames.Any(g => g.Id == game.Id);
                                         
                                         <button @onclick="() => ToggleGameSupport(game)" 
                                                 class="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/5 transition-colors text-left">
@@ -212,13 +211,9 @@ else
                             else
                             {
                                 <div class="flex flex-col gap-3">
-                                    @{
-                                        var latestRelease = _mod.Releases.OrderByDescending(r => r.ReleasedAt).FirstOrDefault();
-                                        var games = latestRelease?.SupportedGames ?? new();
-                                    }
-                                    @if (games.Any())
+                                    @if (_mod.SupportedGames.Any())
                                     {
-                                        @foreach (var game in games)
+                                        @foreach (var game in _mod.SupportedGames)
                                         {
                                             <a href="/explore?gameId=@game.Id" class="group relative flex items-center gap-4 bg-[#1a1e2b] border border-[#232a3b] hover:border-primary/50 p-2 rounded-xl transition-all overflow-hidden">
                                                 <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -354,8 +349,8 @@ else
         using var context = await DbFactory.CreateDbContextAsync();
         _mod = await context.Mods
             .Include(m => m.Developer)
+            .Include(m => m.SupportedGames)
             .Include(m => m.Releases)
-                .ThenInclude(r => r.SupportedGames)
             .Include(m => m.Releases)
                 .ThenInclude(r => r.Assets)
             .FirstOrDefaultAsync(m => m.Id == Id);
@@ -390,27 +385,24 @@ else
     {
         if (_mod == null || !_isOwner) return;
 
-        var latestRelease = _mod.Releases.OrderByDescending(r => r.ReleasedAt).FirstOrDefault();
-        if (latestRelease == null) return;
-
         using var context = await DbFactory.CreateDbContextAsync();
-        var dbRelease = await context.Releases
-            .Include(r => r.SupportedGames)
-            .FirstOrDefaultAsync(r => r.Id == latestRelease.Id);
+        var dbMod = await context.Mods
+            .Include(m => m.SupportedGames)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
-        if (dbRelease != null)
+        if (dbMod != null)
         {
-            var existingGame = dbRelease.SupportedGames.FirstOrDefault(g => g.Id == game.Id);
+            var existingGame = dbMod.SupportedGames.FirstOrDefault(g => g.Id == game.Id);
             if (existingGame != null)
             {
-                dbRelease.SupportedGames.Remove(existingGame);
+                dbMod.SupportedGames.Remove(existingGame);
             }
             else
             {
                 var dbGame = await context.Games.FindAsync(game.Id);
                 if (dbGame != null)
                 {
-                    dbRelease.SupportedGames.Add(dbGame);
+                    dbMod.SupportedGames.Add(dbGame);
                 }
             }
 
