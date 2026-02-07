@@ -8,10 +8,10 @@
         </div>
     </div>
     <h3 class="text-white font-bold text-lg mb-1 group-hover:text-primary transition-colors">@Mod.Name</h3>
-    <div class="flex items-center gap-2 mb-3">
+    <a href="/profile/@Mod.Developer?.GitHubUsername" class="flex items-center gap-2 mb-3 hover:opacity-80 transition-opacity" @onclick:stopPropagation="true">
         <div class="size-5 rounded-full bg-cover" style="background-image: url('@Mod.Developer?.AvatarUrl')"></div>
         <span class="text-sm text-slate-400">@@@Mod.Developer?.GitHubUsername</span>
-    </div>
+    </a>
     <div class="flex items-center justify-between text-xs text-slate-500 border-t border-white/5 pt-3 mt-auto">
         <div class="flex items-center gap-3">
             <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs text-yellow-500">star</span> @FormatCount(Mod.Stars)</span>

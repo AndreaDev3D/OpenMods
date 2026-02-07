@@ -40,11 +40,11 @@
         </div>
 
         <div class="flex items-center gap-3 text-xs text-slate-400 mb-4 font-mono">
-            <div class="flex items-center gap-1.5 hover:text-white transition-colors">
+            <a href="/profile/@Mod.Developer?.GitHubUsername" class="flex items-center gap-1.5 hover:text-white transition-colors" @onclick:stopPropagation="true">
                 <div class="size-4 rounded-full bg-cover" style="background-image: url('@Mod.Developer?.AvatarUrl')">
                 </div>
                 <span>@Mod.Developer?.GitHubUsername / @Mod.Name.ToLower().Replace(" ", "-")</span>
-            </div>
+            </a>
             <span class="text-slate-600">•</span>
             <div class="flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm text-yellow-500/80">star</span>

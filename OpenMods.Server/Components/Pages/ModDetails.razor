@@ -1,12 +1,14 @@
 @page "/mod/{Id:int}"
 @using OpenMods.Server.Models
 @using OpenMods.Server.Data
+@using OpenMods.Server.Services
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.JSInterop
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject GitHubService Github
 
 <PageTitle>@(_mod?.Name ?? "Loading...") | OpenMods</PageTitle>
 
@@ -82,12 +84,12 @@ else
                             class="px-2 py-0.5 bg-primary/20 text-primary rounded text-xs font-bold uppercase tracking-wider">@LatestVersion</span>
                         </div>
                         <div class="flex items-center gap-4 mt-2 text-[#92a4c9]">
-                            <div class="flex items-center gap-2">
-                                <div class="size-6 rounded-full bg-cover"
-                                     style="background-image: url('@_mod.Developer?.AvatarUrl')"></div>
-                                <span class="text-sm">by <span
-                                    class="text-white font-medium">@_mod.Developer?.GitHubUsername</span></span>
-                                </div>
+                                <a href="/profile/@_mod.Developer?.GitHubUsername" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                    <div class="size-6 rounded-full bg-cover"
+                                         style="background-image: url('@_mod.Developer?.AvatarUrl')"></div>
+                                    <span class="text-sm">by <span
+                                        class="text-white font-medium">@_mod.Developer?.GitHubUsername</span></span>
+                                </a>
                                 <span class="text-border-dark">|</span>
                                 <a class="flex items-center gap-1.5 hover:text-white transition-colors" href="@_mod.GitHubRepoUrl"
                                        target="_blank">
@@ -103,14 +105,18 @@ else
                             <div class="flex gap-2 mr-4 pr-4 border-r border-border-dark">
                                 <button @onclick="HandleArchive"
                                         class="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-500 text-sm font-bold hover:bg-amber-500/20 transition-all">
-                                    <span class="material-symbols-outlined text-[18px]">@( _mod.IsArchived ? "unarchive" :
-                                                                                                                                           "archive")</span>
+                                    <span class="material-symbols-outlined text-[18px]">@(_mod.IsArchived ? "unarchive" : "archive")</span>
                                         <span>@( _mod.IsArchived ? "Restore" : "Archive")</span>
                                     </button>
                                     <button @onclick="HandleDelete"
                                             class="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/50 bg-red-500/10 text-red-500 text-sm font-bold hover:bg-red-500/20 transition-all">
                                         <span class="material-symbols-outlined text-[18px]">delete</span>
                                         <span>Delete</span>
+                                    </button>
+                                    <button @onclick="HandleGitHubRefresh" disabled="@_isRefreshing"
+                                            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/50 bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-all disabled:opacity-50">
+                                        <span class="material-symbols-outlined text-[18px] @(_isRefreshing ? "animate-spin" : "")">@( _isRefreshing ? "sync" : "refresh")</span>
+                                        <span>@(_isRefreshing ? "Syncing..." : "Refresh")</span>
                                     </button>
                                 </div>
                             }
@@ -325,6 +331,7 @@ else
     private bool _isCopied = false;
     private List<Game>? _allGames;
     private int? _expandedVersionId;
+    private bool _isRefreshing = false;
 
     private string FormatFileSize(long bytes)
     {
@@ -443,6 +450,104 @@ else
             context.Mods.Remove(mod);
             await context.SaveChangesAsync();
             Nav.NavigateTo("/explore");
+        }
+    }
+
+    private async Task HandleGitHubRefresh()
+    {
+        if (_mod == null || !_isOwner || _isRefreshing) return;
+
+        try
+        {
+            _isRefreshing = true;
+            StateHasChanged();
+
+            // Use the logic from Dashboard.razor but adapted for this page
+            var uri = new Uri(_mod.GitHubRepoUrl);
+            var fullName = uri.AbsolutePath.TrimStart('/');
+
+            var repoData = await Github.GetRepository(fullName);
+            if (repoData != null)
+            {
+                using var context = await DbFactory.CreateDbContextAsync();
+                var dbMod = await context.Mods.FindAsync(_mod.Id);
+                if (dbMod == null) return;
+
+                dbMod.Stars = repoData.Stars;
+                dbMod.Description = repoData.Description;
+                
+                var readmeHtml = await Github.GetReadmeHtml(fullName);
+                if (!string.IsNullOrEmpty(readmeHtml))
+                {
+                    dbMod.LongDescription = readmeHtml;
+                }
+
+                // Sync Releases
+                var githubReleases = await Github.GetReleases(fullName);
+                if (githubReleases.Any())
+                {
+                    // Get existing releases
+                    var existingReleases = await context.Releases
+                        .Include(r => r.Assets)
+                        .Where(r => r.ModId == _mod.Id)
+                        .ToListAsync();
+
+                    foreach (var ghRelease in githubReleases)
+                    {
+                        var release = existingReleases.FirstOrDefault(r => r.Version == ghRelease.TagName);
+                        if (release == null)
+                        {
+                            release = new Release
+                            {
+                                ModId = _mod.Id,
+                                Version = ghRelease.TagName,
+                                ReleasedAt = ghRelease.PublishedAt,
+                                HtmlUrl = ghRelease.HtmlUrl,
+                            };
+                            context.Releases.Add(release);
+                        }
+                        else
+                        {
+                            release.ReleasedAt = ghRelease.PublishedAt;
+                            release.HtmlUrl = ghRelease.HtmlUrl;
+                        }
+
+                        // Sync Assets
+                        foreach (var ghAsset in ghRelease.Assets)
+                        {
+                            var asset = release.Assets.FirstOrDefault(a => a.Name == ghAsset.Name);
+                            if (asset == null)
+                            {
+                                asset = new ReleaseAsset
+                                {
+                                    Name = ghAsset.Name,
+                                    Size = ghAsset.Size,
+                                    DownloadUrl = ghAsset.BrowserDownloadUrl,
+                                    ContentType = ghAsset.ContentType
+                                };
+                                release.Assets.Add(asset);
+                            }
+                            else
+                            {
+                                asset.Size = ghAsset.Size;
+                                asset.DownloadUrl = ghAsset.BrowserDownloadUrl;
+                                asset.ContentType = ghAsset.ContentType;
+                            }
+                        }
+                    }
+                }
+
+                dbMod.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+                
+                // Reload data to update UI
+                await LoadMod();
+            }
+        }
+        finally
+        {
+            _isRefreshing = false;
+            StateHasChanged();
         }
     }
 
