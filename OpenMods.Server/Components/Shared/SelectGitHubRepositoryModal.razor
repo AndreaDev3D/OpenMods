@@ -44,7 +44,7 @@
                     else if (!FilteredRepos.Any())
                     {
                         <div class="flex flex-col items-center justify-center p-12 text-center">
-                            <span class="material-symbols-outlined text-4xl text-slate-300 mb-2">inventory_2</span>
+                            <img src="img/logo.png" class="w-16 h-auto opacity-20 grayscale mb-4" alt="OpenMods Logo" />
                             <p class="text-slate-500 text-sm font-medium">No repositories found</p>
                             <p class="text-slate-400 text-xs mt-1">Make sure you have public repositories on GitHub.</p>
                         </div>
@@ -163,7 +163,7 @@
 
     private string GetIconForLanguage(string? language) => language?.ToLower() switch
     {
-        "c#" => "deployed_code",
+        "c#" => "code",
         "typescript" or "javascript" => "code",
         "rust" => "settings_input_component",
         "python" => "terminal",
