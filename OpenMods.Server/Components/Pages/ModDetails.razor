@@ -93,6 +93,11 @@ else
                                     </button>
                                 </div>
                             }
+                            <button @onclick="HandleShare"
+                                    class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold @(_isCopied ? "text-emerald-500 border-emerald-500/50" : "hover:bg-border-dark") transition-all">
+                                <span class="material-symbols-outlined text-[18px]">@(_isCopied ? "check_circle" : "share")</span>
+                                @(_isCopied ? "Copied!" : "Share")
+                            </button>
                             <button
                                 class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold hover:bg-border-dark transition-colors">
                                 <span class="material-symbols-outlined text-[18px]">star</span> Star @FormatCount(_mod.Stars)
@@ -263,6 +268,7 @@ else
     private Mod? _mod;
     private bool _isOwner = false;
     private bool _isEditingGames = false;
+    private bool _isCopied = false;
     private List<Game>? _allGames;
 
     protected override async Task OnInitializedAsync()
@@ -362,6 +368,17 @@ else
     }
 
     private string LatestVersion => _mod?.Releases.MaxBy(r => r.ReleasedAt)?.Version ?? "v0.0.0";
+
+    private async Task HandleShare()
+    {
+        var url = Nav.Uri;
+        await JS.InvokeVoidAsync("copyToClipboard", url);
+        _isCopied = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        _isCopied = false;
+        StateHasChanged();
+    }
 
     private string FormatCount(int count) => count >= 1000 ? $"{(count / 1000.0):F1}k" : count.ToString();
 

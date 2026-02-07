@@ -58,6 +58,15 @@
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         };
+
+        window.copyToClipboard = (text) => {
+            navigator.clipboard.writeText(text).then(() => {
+                return true;
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+                return false;
+            });
+        }
     </script>
     <style type="text/tailwindcss">
         body {
