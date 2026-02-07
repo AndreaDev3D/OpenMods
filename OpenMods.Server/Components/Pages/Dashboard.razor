@@ -4,13 +4,16 @@
 @using OpenMods.Server.Models
 @using OpenMods.Server.Services
 @using Microsoft.EntityFrameworkCore
+@using Supabase
+@using Microsoft.JSInterop
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 @inject IDbContextFactory<AppDbContext> DbFactory
-@inject AuthenticationStateProvider AuthStateProvider
-@inject GitHubService GitHubService
-@inject NavigationManager NavigationManager
-
+@inject AuthenticationStateProvider AuthState
+@inject GitHubService Github
+@inject NavigationManager Nav
+@inject AuthService Auth
+@inject IJSRuntime JS
 @if (!string.IsNullOrEmpty(_syncMessage))
 {
     <div class="fixed top-24 right-8 z-[60] bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-xl font-bold animate-bounce flex items-center gap-2">
@@ -43,6 +46,40 @@
             <span class="material-symbols-outlined text-sm">sync</span>
             Sync New Repository
         </button>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="relative group flex items-center h-10">
+                    <button
+                        class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-border-dark cursor-pointer shadow-lg block shrink-0"
+                        style='background-image: url("@(context.User.FindFirst("avatar_url")?.Value ?? "https://lh3.googleusercontent.com/a/default-user")");'></button>
+                    <div
+                        class="absolute right-0 top-full mt-2 w-48 bg-card-dark border border-border-dark rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden text-left">
+                        <div class="p-3 border-b border-border-dark bg-slate-900/50">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Account</p>
+                            <p class="text-sm font-bold text-white truncate">@(context.User.Identity?.Name)</p>
+                        </div>
+                        <div class="p-1 text-slate-100">
+                             <a href="/dashboard"
+                                   class="flex items-center gap-2 p-2.5 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-lg">dashboard</span>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="/profile/@(context.User.Identity?.Name)"
+                                   class="flex items-center gap-2 p-2.5 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-lg">person</span>
+                                <span>My Profile</span>
+                            </a>
+                            <button @onclick="HandleLogout"
+                                    class="w-full flex items-center gap-2 p-2.5 text-sm text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-lg">logout</span>
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
     </div>
 </header>
 
@@ -157,7 +194,6 @@
             </div>
         </section>
     </div>
-
 @code {
     private bool showRepoModal;
     private bool showMetadataModal;
@@ -183,7 +219,7 @@
         
         if (selectedRepoObject == null) return;
 
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var authState = await AuthState.GetAuthenticationStateAsync();
         var githubHandle = authState.User.FindFirst("github_handle")?.Value;
         var avatarUrl = authState.User.FindFirst("avatar_url")?.Value;
 
@@ -208,7 +244,7 @@
         }
 
         // Fetch README
-        var readmeHtml = await GitHubService.GetReadmeHtml(selectedRepoObject.FullName);
+        var readmeHtml = await Github.GetReadmeHtml(selectedRepoObject.FullName);
 
         // 2. Create Mod
         var mod = new Mod
@@ -263,7 +299,7 @@
 
     private async Task LoadMods()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var authState = await AuthState.GetAuthenticationStateAsync();
         var githubHandle = authState.User.FindFirst("github_handle")?.Value;
 
         if (!string.IsNullOrEmpty(githubHandle))
@@ -285,13 +321,13 @@
         var uri = new Uri(mod.GitHubRepoUrl);
         var fullName = uri.AbsolutePath.TrimStart('/'); // e.g., "AndreaDev3D/OpenModsDemoMod1"
         
-        var repoData = await GitHubService.GetRepository(fullName);
+        var repoData = await Github.GetRepository(fullName);
         if (repoData != null)
         {
             mod.Stars = repoData.Stars;
             mod.Description = repoData.Description;
             
-            var readmeHtml = await GitHubService.GetReadmeHtml(fullName);
+            var readmeHtml = await Github.GetReadmeHtml(fullName);
             if (!string.IsNullOrEmpty(readmeHtml))
             {
                 mod.LongDescription = readmeHtml;
@@ -326,5 +362,12 @@
         if (span.TotalDays > 1) return $"{(int)span.TotalDays} days ago";
         if (span.TotalHours > 1) return $"{(int)span.TotalHours} hours ago";
         return "just now";
+    }
+
+    private async Task HandleLogout()
+    {
+        await JS.InvokeVoidAsync("setCookie", "supabase_session", "", -1);
+        await Auth.SignOut();
+        Nav.NavigateTo("/", true);
     }
 }
