@@ -10,6 +10,20 @@
 
 <PageTitle>@(_mod?.Name ?? "Loading...") | OpenMods</PageTitle>
 
+<HeadContent>
+    @if (_mod != null)
+    {
+        <meta property="og:title" content="@(_mod.Name) | OpenMods" />
+        <meta property="og:description" content="@(_mod.Description ?? "OpenMods | Decentralized Modding Layer")" />
+        <meta property="og:image" content="@(_mod.ImageUrl ?? "https://www.openmods.net/img/logo-large.png")" />
+        <meta property="og:url" content="@(Nav.Uri)" />
+        
+        <meta property="twitter:title" content="@(_mod.Name) | OpenMods" />
+        <meta property="twitter:description" content="@(_mod.Description ?? "OpenMods | Decentralized Modding Layer")" />
+        <meta property="twitter:image" content="@(_mod.ImageUrl ?? "https://www.openmods.net/img/logo-large.png")" />
+    }
+</HeadContent>
+
 @if (_mod == null)
 {
     <div class="flex items-center justify-center min-h-[60vh]">
