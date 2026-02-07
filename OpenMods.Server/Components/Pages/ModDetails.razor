@@ -32,7 +32,7 @@
 }
 else
 {
-    <main class="px-10 py-6 max-w-[1400px] mx-auto w-full">
+    <main class="px-6 lg:px-10 py-6 max-w-[1440px] mx-auto w-full">
         <nav class="flex items-center gap-2 mb-8 text-[#92a4c9] text-sm font-display">
             <a class="hover:text-white transition-colors" href="/">OpenMods</a>
             <span class="material-symbols-outlined text-sm">chevron_right</span>
@@ -63,10 +63,17 @@ else
                 <div class="flex gap-6 items-center">
                     <div
                         class="size-24 rounded-xl bg-card-dark border border-border-dark flex items-center justify-center overflow-hidden">
-                        <div
-                            class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-                            <span class="material-symbols-outlined text-5xl text-primary">auto_awesome</span>
-                        </div>
+                        @if (!string.IsNullOrEmpty(_mod.ImageUrl))
+                        {
+                            <img src="@_mod.ImageUrl" class="w-full h-full object-cover" alt="@_mod.Name" />
+                        }
+                        else
+                        {
+                            <div
+                                class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-5xl text-primary">auto_awesome</span>
+                            </div>
+                        }
                     </div>
                     <div>
                         <div class="flex items-center gap-3">
