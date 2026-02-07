@@ -4,6 +4,7 @@
 @using OpenMods.Server.Components.Shared
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
 
 <PageTitle>OpenMods | Explore Open-Source Mods</PageTitle>
 
@@ -97,9 +98,29 @@
     </aside>
 
     <section class="flex-1 flex flex-col gap-6">
+        @if (_selectedGame != null)
+        {
+            <div class="relative w-full h-48 rounded-2xl overflow-hidden border border-border-dark mb-4 flex items-end">
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('@_selectedGame.ImageUrl')"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                <div class="relative p-8 flex items-end justify-between w-full">
+                    <div>
+                        <div class="flex items-center gap-2 text-primary mb-2">
+                             <span class="material-symbols-outlined text-sm">sports_esports</span>
+                             <span class="text-xs font-bold uppercase tracking-widest">Selected Game</span>
+                        </div>
+                        <h2 class="text-4xl font-black text-white tracking-tight">@_selectedGame.Name</h2>
+                    </div>
+                    <button @onclick="() => SelectGame(null)" class="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white size-10 rounded-full flex items-center justify-center transition-all group">
+                         <span class="material-symbols-outlined transition-transform group-hover:rotate-90">close</span>
+                    </button>
+                </div>
+            </div>
+        }
+
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div class="font-display">
-                <h1 class="text-3xl font-bold tracking-tight">Explore OpenMods Explorer</h1>
+                <h1 class="text-3xl font-bold tracking-tight">@(_selectedGame == null ? "Explore OpenMods" : $"{_selectedGame.Name} Mods")</h1>
                 <p class="text-slate-500 dark:text-slate-400 mt-1">Discover, download, and contribute to
                     community-driven projects.</p>
                 </div>
@@ -223,6 +244,8 @@
             </div>
 
 @code {
+    [SupplyParameterFromQuery] public int? GameId { get; set; }
+    
     private int? SelectedCategoryId { get; set; }
     private string _searchQuery = "";
     private string _sortOption = "Newest";
@@ -233,6 +256,7 @@
     private List<Category> _categories = new();
     private List<Mod> _allMods = new();
     private List<Mod> _filteredMods = new();
+    private Game? _selectedGame;
 
     protected override async Task OnInitializedAsync()
     {
@@ -240,26 +264,52 @@
         
         _categories = await context.Categories.OrderBy(c => c.Name).ToListAsync();
         
-        // Manual "seed" for Total Conversions if ignoring DbInitializer for now
-        if (!_categories.Any(c => c.Name == "Total Conversions"))
-        {
-            _categories.Add(new Category { Name = "Total Conversions", Icon = "inventory_2" });
-        }
-        
         _allMods = await context.Mods
             .Include(m => m.Developer)
             .Include(m => m.Releases)
+                .ThenInclude(r => r.SupportedGames)
             .Include(m => m.Categories)
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync();
+
+        if (GameId.HasValue)
+        {
+            _selectedGame = await context.Games.FindAsync(GameId.Value);
+        }
 
         _isLoading = false;
         FilterMods();
     }
 
+    protected override void OnParametersSet()
+    {
+        // Handle query parameter changes if already on page
+        if (GameId.HasValue && (_selectedGame == null || _selectedGame.Id != GameId.Value))
+        {
+            using var context = DbFactory.CreateDbContext();
+            _selectedGame = context.Games.Find(GameId.Value);
+            FilterMods();
+        }
+    }
+
     private void SelectCategory(int? categoryId)
     {
         SelectedCategoryId = categoryId;
+        FilterMods();
+    }
+
+    private void SelectGame(int? gameId)
+    {
+        if (gameId == null)
+        {
+            _selectedGame = null;
+            // Clear query param
+            Nav.NavigateTo("/explore");
+        }
+        else
+        {
+            Nav.NavigateTo($"/explore?gameId={gameId}");
+        }
         FilterMods();
     }
 
@@ -274,6 +324,8 @@
         _searchQuery = "";
         SelectedCategoryId = null;
         _verifiedOnly = false;
+        _selectedGame = null;
+        Nav.NavigateTo("/explore");
         FilterMods();
     }
 
@@ -284,13 +336,19 @@
         // Security: Never show archived mods in explorer
         query = query.Where(m => !m.IsArchived);
 
-        // 1. Category Filter
+        // 1. Game Filter
+        if (_selectedGame != null)
+        {
+            query = query.Where(m => m.Releases.Any(r => r.SupportedGames.Any(g => g.Id == _selectedGame.Id)));
+        }
+
+        // 2. Category Filter
         if (SelectedCategoryId != null)
         {
             query = query.Where(m => m.Categories.Any(c => c.Id == SelectedCategoryId));
         }
 
-        // 2. Search Filter
+        // 3. Search Filter
         if (!string.IsNullOrWhiteSpace(_searchQuery))
         {
             var search = _searchQuery.ToLower();
@@ -299,13 +357,13 @@
                 (m.Description != null && m.Description.ToLower().Contains(search)));
         }
 
-        // 3. Verification Filter
+        // 4. Verification Filter
         if (_verifiedOnly)
         {
             query = query.Where(m => m.Stars >= 1000);
         }
 
-        // 4. Sorting
+        // 5. Sorting
         query = _sortOption switch
         {
             "Stars" => query.OrderByDescending(m => m.Stars),

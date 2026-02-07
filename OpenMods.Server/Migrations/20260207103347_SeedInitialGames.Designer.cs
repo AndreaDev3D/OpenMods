@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OpenMods.Server.Data;
@@ -12,9 +13,11 @@ using OpenMods.Server.Data;
 namespace OpenMods.Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260207103347_SeedInitialGames")]
+    partial class SeedInitialGames
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,72 +134,37 @@ namespace OpenMods.Server.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Sci-fi Sandbox",
+                            Description = "Aether Protocol",
                             ImageUrl = "https://images.unsplash.com/photo-1582125032515-3850559e3549?auto=format&fit=crop&q=80&w=800",
-                            Name = "Aether Protocol"
+                            Name = "Subnautica"
                         },
                         new
                         {
                             Id = 2,
-                            Description = "Cyberpunk RPG",
+                            Description = "Neon Horizon",
                             ImageUrl = "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800",
-                            Name = "Neon Horizon"
+                            Name = "Subnautica: Below Zero"
                         },
                         new
                         {
                             Id = 3,
-                            Description = "Neural Space Simulation",
+                            Description = "Code Strider",
                             ImageUrl = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800",
-                            Name = "Code Strider"
+                            Name = "Starfield"
                         },
                         new
                         {
                             Id = 4,
-                            Description = "Abstract Engine",
+                            Description = "The Flux Engine",
                             ImageUrl = "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&q=80&w=800",
-                            Name = "The Flux Engine"
+                            Name = "Cyberpunk 2077"
                         },
                         new
                         {
                             Id = 5,
-                            Description = "Void Exploration",
+                            Description = "Zero Point",
                             ImageUrl = "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&q=80&w=800",
-                            Name = "Zero Point"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Description = "Tactical Dimension RPG",
-                            ImageUrl = "https://images.unsplash.com/photo-1538370910019-0d1052bd7729?auto=format&fit=crop&q=80&w=800",
-                            Name = "Rift Walkers"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Description = "Minimalist Stealth",
-                            ImageUrl = "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800",
-                            Name = "Shadow Script"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Description = "Construction Simulation",
-                            ImageUrl = "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=800",
-                            Name = "Binary Outpost"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Description = "Retro Futuristic FPS",
-                            ImageUrl = "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&q=80&w=800",
-                            Name = "System Shockwaves"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Description = "Data Flow Racing",
-                            ImageUrl = "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?auto=format&fit=crop&q=80&w=800",
-                            Name = "Grid Runner"
+                            Name = "Minecraft"
                         });
                 });
 

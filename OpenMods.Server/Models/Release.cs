@@ -17,4 +17,6 @@ public class Release
     public string? Changelog { get; set; }
     
     public DateTime ReleasedAt { get; set; } = DateTime.UtcNow;
+
+    public List<Game> SupportedGames { get; set; } = new();
 }

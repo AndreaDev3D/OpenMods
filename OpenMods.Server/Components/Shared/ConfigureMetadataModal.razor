@@ -1,11 +1,14 @@
 @using OpenMods.Server.Models
+@using OpenMods.Server.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<AppDbContext> DbFactory
 
 @if (IsOpen)
 {
     <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-display overflow-y-auto">
+        class="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm p-4 font-display overflow-y-auto pt-12 pb-12">
         <div
-            class="bg-white dark:bg-[#161e2e] w-full max-w-4xl rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-8">
+            class="bg-white dark:bg-[#161e2e] w-full max-w-4xl rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden relative">
             <div
                 class="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex flex-wrap justify-between items-start gap-4">
                 <div class="space-y-1">
@@ -41,6 +44,63 @@
                                     class="material-symbols-outlined text-3xl mb-2 text-slate-400 group-hover:text-primary transition-colors @(SelectedCategory == cat.Item1 ? "text-primary" : "")">@cat.Item2</span>
                                     <span class="text-sm font-bold text-slate-600 dark:text-slate-300">@cat.Item1</span>
                                 </label>
+                            }
+                        </div>
+                    </section>
+                    <section>
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-sm font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Select Supported Games</label>
+                            <div class="relative w-full max-w-xs">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+                                <input type="text" 
+                                       placeholder="Search games..." 
+                                       @bind="_gameSearchQuery" 
+                                       @bind:event="oninput"
+                                       class="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-900 dark:text-slate-200 focus:ring-2 focus:ring-primary/20 transition-all outline-none" />
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            @if (_availableGames == null)
+                            {
+                                <div class="col-span-full py-8 text-center text-slate-500 animate-pulse text-sm">Loading games...</div>
+                            }
+                            else
+                            {
+                                var filtered = string.IsNullOrWhiteSpace(_gameSearchQuery) 
+                                    ? _availableGames.Take(8).ToList() 
+                                    : _availableGames.Where(g => g.Name.Contains(_gameSearchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+
+                                @if (!filtered.Any())
+                                {
+                                    <div class="col-span-full py-8 text-center text-slate-500 text-xs italic">No games matching "@_gameSearchQuery"</div>
+                                }
+                                else
+                                {
+                                    @foreach (var game in filtered)
+                                    {
+                                        <button @onclick="() => ToggleGame(game.Id)"
+                                                class="relative group aspect-video rounded-xl overflow-hidden border-2 transition-all @(_selectedGameIds.Contains(game.Id) ? "border-primary ring-4 ring-primary/20 scale-[1.02]" : "border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700")">
+                                            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('@game.ImageUrl')"></div>
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-3">
+                                                <span class="text-[10px] font-bold text-white leading-tight">@game.Name</span>
+                                            </div>
+                                            @if (_selectedGameIds.Contains(game.Id))
+                                            {
+                                                <div class="absolute top-2 right-2 bg-primary text-white size-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[#161e2e]">
+                                                    <span class="material-symbols-outlined text-[12px] font-bold">check</span>
+                                                </div>
+                                            }
+                                        </button>
+                                    }
+                                }
+                                
+                                @if (string.IsNullOrWhiteSpace(_gameSearchQuery) && _availableGames.Count > 8)
+                                {
+                                    <div class="col-span-full text-center mt-2">
+                                        <p class="text-[10px] text-slate-500 italic">Showing top 8 games. Use search to find more.</p>
+                                    </div>
+                                }
                             }
                         </div>
                     </section>
@@ -137,9 +197,26 @@
     [Parameter] public EventCallback OnBack { get; set; }
     [Parameter] public EventCallback<ModMetadata> OnPublish { get; set; }
 
+    private List<Game> _availableGames = new();
+    private List<int> _selectedGameIds = new();
+    private string _gameSearchQuery = "";
     private string SelectedCategory { get; set; } = "Gameplay";
     private List<string> _tags = new() { "Optimization", "Graphics" };
     private bool IsConfirmed { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        _availableGames = await context.Games.ToListAsync();
+    }
+
+    private void ToggleGame(int gameId)
+    {
+        if (_selectedGameIds.Contains(gameId))
+            _selectedGameIds.Remove(gameId);
+        else
+            _selectedGameIds.Add(gameId);
+    }
 
     private void Close()
     {
@@ -154,6 +231,7 @@
         {
             Category = SelectedCategory,
             Tags = _tags,
+            SelectedGameIds = _selectedGameIds,
             IsConfirmed = IsConfirmed
         };
         OnPublish.InvokeAsync(metadata);

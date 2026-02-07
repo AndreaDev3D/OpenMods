@@ -134,26 +134,95 @@ else
                             </div>
 
                             <div class="bg-card-dark border border-border-dark rounded-xl p-6">
-                                <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9] mb-4">Project Metadata</h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
-                                        <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
-                                            <span class="material-symbols-outlined text-sm">star</span>
-                                            <span class="text-xs font-medium">Stars</span>
-                                        </div>
-                                        <p class="text-lg font-bold">@FormatCount(_mod.Stars)</p>
-                                    </div>
-                                    <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
-                                        <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
-                                            <span class="material-symbols-outlined text-sm">fork_right</span>
-                                            <span class="text-xs font-medium">Forks</span>
-                                        </div>
-                                        <p class="text-lg font-bold">@FormatCount(_mod.Forks)</p>
-                                    </div>
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9] mb-4">Project Metadata</h3>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
+                                <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
+                                    <span class="material-symbols-outlined text-sm">star</span>
+                                    <span class="text-xs font-medium">Stars</span>
                                 </div>
+                                <p class="text-lg font-bold">@FormatCount(_mod.Stars)</p>
+                            </div>
+                            <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
+                                <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
+                                    <span class="material-symbols-outlined text-sm">fork_right</span>
+                                    <span class="text-xs font-medium">Forks</span>
+                                </div>
+                                <p class="text-lg font-bold">@FormatCount(_mod.Forks)</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-[10px] font-bold uppercase tracking-widest text-[#4a5568]">Supported Games</h4>
+                                @if (_isOwner)
+                                {
+                                    <button @onclick="() => _isEditingGames = !_isEditingGames" 
+                                            class="text-[10px] font-bold text-primary hover:underline">
+                                        @(_isEditingGames ? "Cancel" : "Edit")
+                                    </button>
+                                }
                             </div>
 
-                            <div class="bg-card-dark border border-border-dark rounded-xl p-6">
+                            @if (_isEditingGames && _allGames != null)
+                            {
+                                <div class="grid grid-cols-2 gap-2 bg-[#1a1e2b] p-3 rounded-lg border border-[#232a3b]">
+                                    @foreach (var game in _allGames)
+                                    {
+                                        var latestRelease = _mod.Releases.OrderByDescending(r => r.ReleasedAt).FirstOrDefault();
+                                        bool isSupported = latestRelease?.SupportedGames.Any(g => g.Id == game.Id) ?? false;
+                                        
+                                        <button @onclick="() => ToggleGameSupport(game)" 
+                                                class="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/5 transition-colors text-left">
+                                            <div class="size-4 rounded border @(isSupported ? "bg-primary border-primary flex items-center justify-center" : "border-[#232a3b]")">
+                                                @if (isSupported)
+                                                { <span class="material-symbols-outlined text-white text-[12px] font-bold">check</span> }
+                                            </div>
+                                            <span class="text-[11px] font-medium @(isSupported ? "text-white" : "text-[#4a5568]")">@game.Name</span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="flex flex-col gap-3">
+                                    @{
+                                        var latestRelease = _mod.Releases.OrderByDescending(r => r.ReleasedAt).FirstOrDefault();
+                                        var games = latestRelease?.SupportedGames ?? new();
+                                    }
+                                    @if (games.Any())
+                                    {
+                                        @foreach (var game in games)
+                                        {
+                                            <a href="/explore?gameId=@game.Id" class="group relative flex items-center gap-4 bg-[#1a1e2b] border border-[#232a3b] hover:border-primary/50 p-2 rounded-xl transition-all overflow-hidden">
+                                                <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                <div class="relative size-12 rounded-lg overflow-hidden border border-white/10 shrink-0">
+                                                    <img src="@game.ImageUrl" class="size-full object-cover transition-transform duration-500 group-hover:scale-110" alt="@game.Name" />
+                                                </div>
+                                                <div class="relative flex-1 min-w-0">
+                                                    <p class="text-[13px] font-bold text-white truncate group-hover:text-primary transition-colors">@game.Name</p>
+                                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                                        <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                                        <span class="text-[10px] text-[#92a4c9] font-medium uppercase tracking-wider">Compatible</span>
+                                                    </div>
+                                                </div>
+                                                <span class="material-symbols-outlined text-[#4a5568] group-hover:text-primary transition-colors text-lg pr-1">chevron_right</span>
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="flex flex-col items-center justify-center py-8 rounded-xl border border-dashed border-[#232a3b] bg-white/[0.02]">
+                                            <span class="material-symbols-outlined text-[#4a5568] text-3xl mb-2">sports_esports</span>
+                                            <span class="text-xs text-[#4a5568] italic tracking-tight">No platforms specified</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="bg-card-dark border border-border-dark rounded-xl p-6">
                                 <div class="flex items-center justify-between mb-4">
                                     <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9]">Versions</h3>
                                     <a class="text-primary text-xs font-bold hover:underline" href="#">View All</a>
@@ -193,6 +262,8 @@ else
     [Parameter] public int Id { get; set; }
     private Mod? _mod;
     private bool _isOwner = false;
+    private bool _isEditingGames = false;
+    private List<Game>? _allGames;
 
     protected override async Task OnInitializedAsync()
     {
@@ -205,14 +276,53 @@ else
         _mod = await context.Mods
             .Include(m => m.Developer)
             .Include(m => m.Releases)
+                .ThenInclude(r => r.SupportedGames)
             .FirstOrDefaultAsync(m => m.Id == Id);
+
+        _allGames = await context.Games.ToListAsync();
 
         if (_mod != null)
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
+            
+            // Case-insensitive check for owner
+            var githubHandle = user.FindFirst("github_handle")?.Value;
             _isOwner = user.Identity?.IsAuthenticated == true &&
-                      user.Identity.Name?.ToLower() == _mod.Developer?.GitHubUsername?.ToLower();
+                      githubHandle?.ToLower() == _mod.Developer?.GitHubUsername?.ToLower();
+        }
+    }
+
+    private async Task ToggleGameSupport(Game game)
+    {
+        if (_mod == null || !_isOwner) return;
+
+        var latestRelease = _mod.Releases.OrderByDescending(r => r.ReleasedAt).FirstOrDefault();
+        if (latestRelease == null) return;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+        var dbRelease = await context.Releases
+            .Include(r => r.SupportedGames)
+            .FirstOrDefaultAsync(r => r.Id == latestRelease.Id);
+
+        if (dbRelease != null)
+        {
+            var existingGame = dbRelease.SupportedGames.FirstOrDefault(g => g.Id == game.Id);
+            if (existingGame != null)
+            {
+                dbRelease.SupportedGames.Remove(existingGame);
+            }
+            else
+            {
+                var dbGame = await context.Games.FindAsync(game.Id);
+                if (dbGame != null)
+                {
+                    dbRelease.SupportedGames.Add(dbGame);
+                }
+            }
+
+            await context.SaveChangesAsync();
+            await LoadMod(); // Refresh UI
         }
     }
 

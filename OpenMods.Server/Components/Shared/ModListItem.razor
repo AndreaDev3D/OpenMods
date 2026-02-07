@@ -32,6 +32,11 @@
                 <span
                 class="bg-slate-700/50 text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">@cat.Name</span>
             }
+            @foreach (var game in Mod.Releases.OrderByDescending(r => r.ReleasedAt).FirstOrDefault()?.SupportedGames ?? new())
+            {
+                <span
+                class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-primary/20">@game.Name</span>
+            }
         </div>
 
         <div class="flex items-center gap-3 text-xs text-slate-400 mb-4 font-mono">
