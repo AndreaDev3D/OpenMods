@@ -94,18 +94,15 @@
                 <p class="text-sm font-medium text-slate-500">Total Downloads</p>
                 <span class="material-symbols-outlined text-primary">download</span>
             </div>
-            <h3 class="text-3xl font-bold text-slate-900 dark:text-white">142.8k</h3>
-            <p class="text-xs text-green-500 mt-2 flex items-center gap-1">
-                <span class="material-symbols-outlined text-xs">trending_up</span>
-                +12.5% from last month
-            </p>
+            <h3 class="text-3xl font-bold text-slate-900 dark:text-white">@FormatLargeNumber(_totalDownloads)</h3>
+            <p class="text-xs text-slate-400 mt-2">Accumulated across all mods</p>
         </div>
         <div class="bg-white dark:bg-card-dark p-6 rounded-xl border border-slate-200 dark:border-border-dark">
             <div class="flex items-center justify-between mb-2">
                 <p class="text-sm font-medium text-slate-500">Active Mods</p>
                 <span class="material-symbols-outlined text-primary">extension</span>
             </div>
-            <h3 class="text-3xl font-bold text-slate-900 dark:text-white">12</h3>
+            <h3 class="text-3xl font-bold text-slate-900 dark:text-white">@_activeModCount</h3>
             <p class="text-xs text-slate-400 mt-2">All OpenMods systems functional</p>
         </div>
         <div class="bg-white dark:bg-card-dark p-6 rounded-xl border border-slate-200 dark:border-border-dark">
@@ -199,6 +196,8 @@
     private bool showMetadataModal;
     private GitHubRepository? selectedRepoObject;
     private List<Mod> _dbMods = new();
+    private long _totalDownloads;
+    private int _activeModCount;
 
     private void HandleRepoSelected(GitHubRepository repo)
     {
@@ -301,6 +300,9 @@
                 .Where(m => m.Developer!.GitHubUsername == githubHandle)
                 .OrderByDescending(m => m.UpdatedAt)
                 .ToListAsync();
+
+            _totalDownloads = _dbMods.Sum(m => (long)m.Downloads);
+            _activeModCount = _dbMods.Count(m => !m.IsArchived);
         }
     }
 
@@ -414,6 +416,15 @@
         if (span.TotalDays > 1) return $"{(int)span.TotalDays} days ago";
         if (span.TotalHours > 1) return $"{(int)span.TotalHours} hours ago";
         return "just now";
+    }
+
+    private string FormatLargeNumber(long number)
+    {
+        if (number >= 1000000)
+            return (number / 1000000D).ToString("0.#M");
+        if (number >= 1000)
+            return (number / 1000D).ToString("0.#k");
+        return number.ToString();
     }
 
     private async Task HandleLogout()
