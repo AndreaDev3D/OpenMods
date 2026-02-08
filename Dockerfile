@@ -34,7 +34,9 @@ COPY --from=publish /app/publish .
 
 # Create keys directory for Data Protection and set ownership
 # Note: In .NET 8+, the default user is 'app'
+# Install Kerberos library
 USER root
+RUN apt-get update && apt-get install -y libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /app/keys && chown -R 1654:1654 /app/keys
 USER app
 
