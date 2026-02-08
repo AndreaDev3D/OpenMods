@@ -50,6 +50,11 @@
                     <span class="material-symbols-outlined text-lg">api</span>
                     API Reference
                 </button>
+                <button @onclick='() => ScrollTo("webhooks")'
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
+                    <span class="material-symbols-outlined text-lg">webhook</span>
+                    Webhooks
+                </button>
             </nav>
         </div>
 
@@ -182,6 +187,31 @@
                         </div>
                     </div>
 
+            <h2 id="webhooks" class="text-2xl font-bold text-white mb-6 font-display">GitHub Webhooks</h2>
+            <p class="mb-4">
+                Automate your mod updates by configuring a GitHub Webhook. OpenMods will automatically sync your mod's metadata and releases whenever you push to your repository.
+            </p>
+            <div class="space-y-4 mb-12 not-prose">
+                <div class="p-6 bg-card-dark border border-border-dark rounded-2xl">
+                    <h4 class="text-white font-bold mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">settings</span>
+                        Configuration
+                    </h4>
+                    <ol class="space-y-4 list-decimal list-inside text-slate-300 text-sm">
+                        <li>Go to your GitHub Repository Settings > <strong>Webhooks</strong></li>
+                        <li>Click <strong>Add webhook</strong></li>
+                        <li><strong>Payload URL</strong>: <code>https://www.openmods.net/api/webhooks/github</code></li>
+                        <li><strong>Content type</strong>: <code>application/json</code></li>
+                        <li><strong>Secret</strong>: <em>Use one of your <strong>API Keys</strong> from the Dashboard</em></li>
+                        <li><strong>Which events?</strong>: Select **Let me select individual events** and check:
+                            <ul class="list-disc list-inside ml-4 mt-2">
+                                <li><code>Pushes</code> (for metadata updates)</li>
+                                <li><code>Releases</code> (for new downloads)</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+            </div>
 
                         <h2 id="api" class="text-2xl font-bold text-white mb-6 font-display">API Reference</h2>
                         <p class="mb-4">

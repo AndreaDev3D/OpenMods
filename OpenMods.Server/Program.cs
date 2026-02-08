@@ -52,7 +52,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddHttpClient<GitHubService>();
+builder.Services.AddHttpClient<GitHubService>(client =>
+{
+    var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+    if (!string.IsNullOrEmpty(token))
+    {
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+    }
+});
 builder.Services.AddScoped<ModService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<AnalyticsService>();
