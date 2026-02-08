@@ -22,18 +22,29 @@
         </div>
 
         <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 px-3">Platform Features</h3>
+            <nav class="flex flex-col gap-1">
+                <button @onclick='() => ScrollTo("galleries")'
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
+                    <span class="material-symbols-outlined text-lg">collections</span>
+                    Mod Galleries
+                </button>
+                <button @onclick='() => ScrollTo("analytics")'
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
+                    <span class="material-symbols-outlined text-lg">monitoring</span>
+                    Analytics
+                </button>
+                <button @onclick='() => ScrollTo("security")'
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
+                    <span class="material-symbols-outlined text-lg">security</span>
+                    API & Security
+                </button>
+            </nav>
+        </div>
+
+        <div>
             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 px-3">For Developers</h3>
             <nav class="flex flex-col gap-1">
-                <button @onclick='() => ScrollTo("stitch")'
-                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
-                    <span class="material-symbols-outlined text-lg">terminal</span>
-                    Stitch CLI
-                </button>
-                <button @onclick='() => ScrollTo("registry")'
-                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
-                    <span class="material-symbols-outlined text-lg">inventory_2</span>
-                    The Registry
-                </button>
                 <button @onclick='() => ScrollTo("api")'
                         class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
                     <span class="material-symbols-outlined text-lg">api</span>
@@ -122,37 +133,82 @@
                                             </div>
                                         </div>
 
-                                        <h2 id="stitch" class="text-2xl font-bold text-white mb-6 font-display">Stitch CLI</h2>
-                                        <p class="mb-4">Stitch is the command-line tool for OpenMods developers. It handles project initialization,
-                                            asset bundling, and registry publication.</p>
-            
-                                            <div class="bg-black/40 border border-border-dark rounded-xl p-4 mb-8 font-mono text-sm overflow-hidden">
-                                                <div class="text-slate-500 mb-2"># Install Stitch globally</div>
-                                                <div class="text-green-400">npm install -g @@openmods/stitch</div>
-                                                <div class="mt-4 text-slate-500 mb-2"># Initialize a new project</div>
-                                                <div class="text-green-400">stitch init my-awesome-mod</div>
-                                            </div>
+                    <div class="h-px bg-border-dark my-12"></div>
 
-                                            <h2 id="registry" class="text-2xl font-bold text-white mb-6 font-display">The Registry</h2>
-                                            <p class="mb-8">
-                                                The OpenMods Registry is the single source of truth for mod metadata. It tracks versions, dependencies,
-                                                and developer signatures. When you use <code>stitch publish</code>, your mod is instantly indexed and
-                                                searchable on this website.
-                                            </p>
+                    <h2 id="galleries" class="text-2xl font-bold text-white mb-6 font-display">Mod Galleries</h2>
+                    <p class="mb-4">Visual presentation is key to a mod's success. OpenMods provides an integrated gallery system that automatically syncs with your GitHub repository.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 not-prose">
+                        <div class="p-4 bg-slate-800/30 border border-white/5 rounded-xl">
+                            <h4 class="text-white font-bold text-sm mb-1">GitHub Integration</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed">Simply place your images in the <code>/img</code> folder of your repo. Our engine discovers them automatically.</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/30 border border-white/5 rounded-xl">
+                            <h4 class="text-white font-bold text-sm mb-1">Interactive Management</h4>
+                            <p class="text-slate-400 text-xs leading-relaxed">Use the dashboard to pick, reorder, and preview your gallery images with ease.</p>
+                        </div>
+                    </div>
+
+                    <h2 id="analytics" class="text-2xl font-bold text-white mb-6 font-display">Developer Analytics</h2>
+                    <p class="mb-4">Gain deep insights into how your mods are performing with our comprehensive analytics suite.</p>
+                    <ul class="space-y-2 mb-8 text-slate-300 list-none pl-0">
+                        <li class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm">check_circle</span>
+                            Track daily views and total download counts
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm">check_circle</span>
+                            Monitor star engagement over time
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm">check_circle</span>
+                            Geographic distribution of your user base
+                        </li>
+                    </ul>
+
+                    <h2 id="security" class="text-2xl font-bold text-white mb-6 font-display">API & Security</h2>
+                    <p class="mb-4">Security is at the heart of the OpenMods platform. We use industrial-grade authentication for all developer interactions.</p>
+                    <div class="bg-card-dark border border-border-dark rounded-2xl p-6 mb-8 not-prose">
+                        <div class="flex items-start gap-4">
+                            <div class="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined">key</span>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold mb-1">API Key Management</h4>
+                                <p class="text-slate-400 text-sm mb-4">Generate and rotate secure API keys for programmatic access to the OpenMods registry.</p>
+                                <div class="bg-black/60 rounded px-3 py-2 font-mono text-xs text-primary/80 border border-white/5">
+                                    X-API-Key: om_live_582...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                        <h2 id="api" class="text-2xl font-bold text-white mb-6 font-display">API Reference</h2>
+                        <p class="mb-4">
+                            Integrate OpenMods directly into your application using our REST API. We provide comprehensive documentation
+                            via Swagger, allowing you to explore endpoints and test requests in real-time.
+                        </p>
+                        <div class="p-4 bg-slate-800/30 border border-white/5 rounded-xl mb-12">
+                            <a href="/swagger" target="_blank" class="flex items-center gap-3 text-primary hover:underline font-bold">
+                                <span class="material-symbols-outlined text-lg">api</span>
+                                Open Swagger Documentation
+                            </a>
+                        </div>
 
                                             <div class="p-8 bg-primary/10 border border-primary/20 rounded-[2rem] text-center">
                                                 <h3 class="text-xl font-bold text-white mb-2">Ready to contribute?</h3>
-                                                <p class="text-slate-400 mb-6 max-w-md mx-auto">Join hundreds of other developers building the future of
-                                                    decentralized modding.</p>
-                                                    <div class="flex flex-wrap justify-center gap-4">
-                                                        <a href="/dashboard"
-                                                               class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:brightness-110 transition-all">Go
-                                                            to Dashboard</a>
-                                                            <a href="https://github.com/OpenMods" target="_blank"
-                                                                   class="px-6 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-all">GitHub
-                                                                Repo</a>
-                                                            </div>
-                                                        </div>
+                                                <p class="text-white/80 mb-6 max-w-md mx-auto">Join hundreds of other developers building the future of decentralized modding.</p>
+                                                <div class="flex flex-wrap justify-center gap-4">
+                                                    <a href="/dashboard"
+                                                       class="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:brightness-110 transition-all">
+                                                        Go to Dashboard
+                                                    </a>
+                                                    <a href="https://github.com/OpenMods" target="_blank"
+                                                       class="px-6 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-all">
+                                                        GitHub Repo
+                                                    </a>
+                                                </div>
+                                            </div>
                                                     </div>
                                                 </main>
                                             </div>
