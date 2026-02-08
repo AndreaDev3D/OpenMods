@@ -105,6 +105,19 @@ namespace OpenMods.Server.Components.Pages
             _saving = false;
         }
 
+        private async Task SetThumbnail(string? url)
+        {
+            if (Mod == null || string.IsNullOrEmpty(url)) return;
+            
+            var success = await ModService.UpdateModThumbnail(Mod.Id, url);
+            if (success)
+            {
+                Mod.ImageUrl = url;
+                StateHasChanged();
+                await OnSaved.InvokeAsync();
+            }
+        }
+
         private async Task Close()
         {
             await OnClose.InvokeAsync();

@@ -126,4 +126,25 @@ public class ModService
             return false;
         }
     }
+
+    public async Task<bool> UpdateModThumbnail(int modId, string imageUrl)
+    {
+        try
+        {
+            using var context = await _dbFactory.CreateDbContextAsync();
+            var dbMod = await context.Mods.FirstOrDefaultAsync(m => m.Id == modId);
+            if (dbMod == null) return false;
+
+            dbMod.ImageUrl = imageUrl;
+            dbMod.UpdatedAt = DateTime.UtcNow;
+
+            await context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating thumbnail for mod {ModId}", modId);
+            return false;
+        }
+    }
 }

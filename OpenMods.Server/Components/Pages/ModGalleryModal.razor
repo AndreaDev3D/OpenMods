@@ -69,10 +69,23 @@
                                     </div>
                                     @if (isSelected)
                                     {
-                                        <div class="absolute top-2 right-2 bg-primary text-white rounded-full p-0.5 shadow-lg">
-                                            <span class="material-symbols-outlined text-sm font-bold">check</span>
+                                        <div class="absolute top-2 right-2 h-8 w-8 bg-primary text-white rounded-lg shadow-lg flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-xl font-bold">check_box</span>
                                         </div>
                                     }
+                                    else
+                                    {
+                                        <div class="absolute top-2 right-2 h-8 w-8 bg-slate-900/50 text-white rounded-lg shadow-lg hover:bg-slate-900/80 transition-colors flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-xl font-bold">check_box_outline_blank</span>
+                                        </div>
+                                    }
+                                    
+                                     <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button @onclick="() => SetThumbnail(img.DownloadUrl)" @onclick:stopPropagation="true" class="bg-slate-900/70 hover:bg-primary text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur-sm transition-colors flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[12px]">image</span>
+                                            Set Thumbnail
+                                        </button>
+                                    </div>
                                 </div>
                             }
                         </div>
