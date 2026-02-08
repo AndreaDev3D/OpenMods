@@ -7,7 +7,7 @@
 
 <PageTitle>Games Directory | OpenMods</PageTitle>
 
-<div class="min-h-screen bg-[#0a0c10] text-[#e1e7ef] font-display pb-20">
+<div class="min-h-screen text-[#e1e7ef] font-display pb-20">
     <!-- Hero Section -->
     <div class="pt-24 pb-16 text-center px-4 max-w-4xl mx-auto">
         <h1 class="text-5xl font-extrabold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
@@ -128,21 +128,12 @@
     {
         using var context = await DbFactory.CreateDbContextAsync();
         _games = await context.Games
-            .Include(g => g.Releases)
+            .Include(g => g.Mods)
             .ToListAsync();
 
         foreach (var game in _games)
         {
-            // Count total unique mods across all releases for this game
-            // This is a bit simplified; in reality we might want a Mod.SupportedGames or similar
-            _gameModCounts[game.Id] = game.Releases.Select(r => r.ModId).Distinct().Count();
-            
-            // For demo purposes, if counts are 0, let's assign some plausible random numbers like in the screenshot
-            if (_gameModCounts[game.Id] == 0)
-            {
-                var random = new Random(game.Id);
-                _gameModCounts[game.Id] = random.Next(100, 5000);
-            }
+            _gameModCounts[game.Id] = game.Mods.Count;
         }
     }
 
