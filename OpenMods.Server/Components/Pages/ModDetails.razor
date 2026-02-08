@@ -59,86 +59,93 @@ else
                 </div>
             }
 
-            <div
-                class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pb-8 border-b border-border-dark font-display">
-                <div class="flex gap-6 items-center">
-                    <div
-                        class="size-24 rounded-xl bg-card-dark border border-border-dark flex items-center justify-center overflow-hidden">
-                        @if (!string.IsNullOrEmpty(_mod.ImageUrl))
-                        {
-                            <img src="@_mod.ImageUrl" class="w-full h-full object-cover" alt="@_mod.Name" />
-                        }
-                        else
-                        {
-                            <div
-                                class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-5xl text-primary">auto_awesome</span>
-                            </div>
-                        }
+        @if (_isOwner)
+        {
+            <div class="mb-10 p-2 pl-4 bg-card-dark/40 border border-border-dark rounded-xl flex items-center justify-between backdrop-blur-sm animate-in fade-in slide-in-from-top-4 duration-500">
+                <div class="flex items-center gap-3 text-[#92a4c9]">
+                    <span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                    <span class="text-xs font-bold uppercase tracking-widest">Developer Management</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex gap-2 mr-2 pr-2 border-r border-border-dark/50">
+                        <button @onclick="HandleArchive"
+                                class="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/5 text-amber-500 text-xs font-bold hover:bg-amber-500/10 transition-all">
+                            <span class="material-symbols-outlined text-[16px]">@(_mod.IsArchived ? "unarchive" : "archive")</span>
+                            <span>@(_mod.IsArchived ? "Restore" : "Archive")</span>
+                        </button>
+                        <button @onclick="HandleDelete"
+                                class="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-red-500/30 bg-red-500/5 text-red-500 text-xs font-bold hover:bg-red-500/10 transition-all">
+                            <span class="material-symbols-outlined text-[16px]">delete</span>
+                            <span>Delete</span>
+                        </button>
                     </div>
-                    <div>
-                        <div class="flex items-center gap-3">
-                            <h1 class="text-3xl font-bold tracking-tight">@_mod.Name</h1>
-                            <span
-                            class="px-2 py-0.5 bg-primary/20 text-primary rounded text-xs font-bold uppercase tracking-wider">@LatestVersion</span>
-                        </div>
-                        <div class="flex items-center gap-4 mt-2 text-[#92a4c9]">
-                                <a href="/profile/@_mod.Developer?.GitHubUsername" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                                    <div class="size-6 rounded-full bg-cover"
-                                         style="background-image: url('@_mod.Developer?.AvatarUrl')"></div>
-                                    <span class="text-sm">by <span
-                                        class="text-white font-medium">@_mod.Developer?.GitHubUsername</span></span>
-                                </a>
-                                <span class="text-border-dark">|</span>
-                                <a class="flex items-center gap-1.5 hover:text-white transition-colors" href="@_mod.GitHubRepoUrl"
-                                       target="_blank">
-                                    <span class="material-symbols-outlined text-sm">link</span>
-                                    <span class="text-sm">@_mod.GitHubRepoUrl?.Replace("https://", "")</span>
-                                </a>
-                            </div>
-                        </div>
+                    <div class="flex gap-2">
+                        <button @onclick="() => _showGalleryModal = true"
+                                class="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-border-dark bg-card-dark/50 text-white text-xs font-bold hover:bg-border-dark transition-all">
+                            <span class="material-symbols-outlined text-[16px]">collections</span>
+                            <span>Manage Gallery</span>
+                        </button>
+                        <button @onclick="HandleGitHubRefresh" disabled="@_isRefreshing"
+                                class="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-border-dark bg-card-dark/50 text-white text-xs font-bold hover:bg-border-dark transition-all disabled:opacity-50">
+                            <span class="material-symbols-outlined text-[16px] @(_isRefreshing ? "animate-spin" : "")">@(_isRefreshing ? "sync" : "refresh")</span>
+                            <span>@(_isRefreshing ? "Refresh" : "Refresh")</span>
+                        </button>
                     </div>
-                    <div class="flex flex-wrap gap-3">
-                        @if (_isOwner)
-                        {
-                            <div class="flex gap-2 mr-4 pr-4 border-r border-border-dark">
-                                <button @onclick="HandleArchive"
-                                        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-500 text-sm font-bold hover:bg-amber-500/20 transition-all">
-                                    <span class="material-symbols-outlined text-[18px]">@(_mod.IsArchived ? "unarchive" : "archive")</span>
-                                        <span>@( _mod.IsArchived ? "Restore" : "Archive")</span>
-                                    </button>
-                                    <button @onclick="HandleDelete"
-                                            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/50 bg-red-500/10 text-red-500 text-sm font-bold hover:bg-red-500/20 transition-all">
-                                        <span class="material-symbols-outlined text-[18px]">delete</span>
-                                        <span>Delete</span>
-                                    </button>
-                                    <button @onclick="() => _showGalleryModal = true"
-                                            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/50 bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-all">
-                                        <span class="material-symbols-outlined text-[18px]">collections</span>
-                                        <span>Manage Gallery</span>
-                                    </button>
-                                    <button @onclick="HandleGitHubRefresh" disabled="@_isRefreshing"
-                                            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/50 bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-all disabled:opacity-50">
-                                        <span class="material-symbols-outlined text-[18px] @(_isRefreshing ? "animate-spin" : "")">@( _isRefreshing ? "sync" : "refresh")</span>
-                                        <span>@(_isRefreshing ? "Syncing..." : "Refresh")</span>
-                                    </button>
-                                </div>
-                            }
-                            <button @onclick="HandleShare"
-                                    class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold @(_isCopied ? "text-emerald-500 border-emerald-500/50" : "hover:bg-border-dark") transition-all">
-                                <span class="material-symbols-outlined text-[18px]">@(_isCopied ? "check_circle" : "share")</span>
-                                @(_isCopied ? "Copied!" : "Share")
-                            </button>
-                            <button
-                                class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold hover:bg-border-dark transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">star</span> Star @FormatCount(_mod.Stars)
-                            </button>
-                            <button
-                                class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border-dark bg-card-dark text-sm font-bold hover:bg-border-dark transition-colors">
-                                <span class="material-symbols-outlined text-[18px]">visibility</span> @_mod.Views.ToString("N0") Views
-                            </button>
+                </div>
+            </div>
+        }
+
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12 pb-8 border-b border-border-dark/50 font-display">
+            <div class="flex gap-8 items-center">
+                <div class="size-28 rounded-2xl bg-card-dark border border-border-dark flex items-center justify-center overflow-hidden shadow-2xl ring-1 ring-white/5">
+                    @if (!string.IsNullOrEmpty(_mod.ImageUrl))
+                    {
+                        <img src="@_mod.ImageUrl" class="w-full h-full object-cover" alt="@_mod.Name" />
+                    }
+                    else
+                    {
+                        <div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-6xl text-primary">auto_awesome</span>
                         </div>
+                    }
+                </div>
+                <div>
+                    <div class="flex items-center gap-4">
+                        <h1 class="text-4xl font-bold tracking-tight text-white">@_mod.Name</h1>
+                        <span class="px-2.5 py-0.5 bg-primary/20 text-primary border border-primary/30 rounded-md text-[10px] font-black uppercase tracking-[0.2em]">@LatestVersion</span>
                     </div>
+                    <div class="flex items-center gap-6 mt-4 text-[#92a4c9]">
+                        <a href="/profile/@_mod.Developer?.GitHubUsername" class="flex items-center gap-2.5 hover:opacity-100 transition-opacity group">
+                            <div class="size-7 rounded-full bg-cover ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all"
+                                 style="background-image: url('@_mod.Developer?.AvatarUrl')"></div>
+                            <span class="text-sm">by <span class="text-white font-bold group-hover:text-primary transition-colors">@_mod.Developer?.GitHubUsername</span></span>
+                        </a>
+                        <span class="w-px h-4 bg-border-dark"></span>
+                        <a class="flex items-center gap-2 hover:text-white transition-colors group" href="@_mod.GitHubRepoUrl" target="_blank">
+                            <span class="material-symbols-outlined text-[18px] text-slate-500 group-hover:text-primary transition-colors">link</span>
+                            <span class="text-sm font-medium">@_mod.GitHubRepoUrl?.Replace("https://", "")</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button @onclick="HandleShare"
+                        class="flex items-center gap-2 px-6 py-3 rounded-xl border border-border-dark bg-card-dark/30 text-sm font-bold @(_isCopied ? "text-emerald-500 border-emerald-500/50 bg-emerald-500/5" : "text-[#92a4c9] hover:text-white hover:bg-border-dark hover:border-border-light") transition-all duration-300">
+                    <span class="material-symbols-outlined text-[20px]">@(_isCopied ? "check_circle" : "share")</span>
+                    @(_isCopied ? "Copied!" : "Share")
+                </button>
+                <button @onclick="HandleStar"
+                        class="flex items-center gap-2 px-6 py-3 rounded-xl border border-border-dark bg-card-dark text-sm font-bold text-white hover:bg-primary hover:border-primary transition-all duration-300 shadow-lg shadow-primary/20">
+                    <span class="material-symbols-outlined text-[20px] fill-current">star</span> 
+                    Star <span class="text-white/60 font-medium ml-1">@FormatCount(_mod.Stars)</span>
+                </button>
+                <div class="hidden md:flex flex-col items-center px-4">
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Views</span>
+                    <span class="text-sm font-bold text-white">@_mod.Views.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
                         <div class="lg:col-span-8 space-y-8">
@@ -552,6 +559,21 @@ else
         await Task.Delay(2000);
         _isCopied = false;
         StateHasChanged();
+    }
+
+    private async Task HandleStar()
+    {
+        if (_mod == null) return;
+        
+        using var context = await DbFactory.CreateDbContextAsync();
+        var mod = await context.Mods.FindAsync(Id);
+        if (mod != null)
+        {
+            mod.Stars++;
+            await context.SaveChangesAsync();
+            _mod.Stars = mod.Stars;
+            StateHasChanged();
+        }
     }
 
     private string FormatCount(int count) => count >= 1000 ? $"{(count / 1000.0):F1}k" : count.ToString();
