@@ -20,8 +20,26 @@ public class ApiKeyService
     public async Task<int?> GetDeveloperIdByHandle(string handle)
     {
         using var context = await _dbFactory.CreateDbContextAsync();
-        var dev = await context.Developers.FirstOrDefaultAsync(d => d.GitHubUsername == handle);
+        var dev = await context.Developers.AsNoTracking().FirstOrDefaultAsync(d => d.GitHubUsername == handle);
         return dev?.Id;
+    }
+
+    public async Task<int?> ValidateApiKey(string key)
+    {
+        using var context = await _dbFactory.CreateDbContextAsync();
+        var apiKey = await context.ApiKeys.AsNoTracking().FirstOrDefaultAsync(a => a.Key == key);
+        return apiKey?.DeveloperId;
+    }
+
+    public async Task UpdateLastUsed(string key)
+    {
+        using var context = await _dbFactory.CreateDbContextAsync();
+        var apiKey = await context.ApiKeys.FirstOrDefaultAsync(a => a.Key == key);
+        if (apiKey != null)
+        {
+            apiKey.LastUsedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+        }
     }
 
     public async Task<List<ApiKey>> GetApiKeysForDeveloper(int developerId)

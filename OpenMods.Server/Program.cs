@@ -7,6 +7,7 @@ using OpenMods.Shared.Services;
 using OpenMods.Server.Services;
 using OpenMods.Server.Components;
 using OpenMods.Shared.Data;
+using OpenMods.Server.Authentication;
 
 // Load environment variables from .env file
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -61,13 +62,27 @@ builder.Services.AddHttpClient<GitHubService>();
 builder.Services.AddScoped<ModService>();
 builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<AuthenticationStateProvider, SupabaseAuthStateProvider>();
-builder.Services.AddAuthentication("Supabase")
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = "Supabase";
+        options.DefaultChallengeScheme = "Supabase";
+    })
     .AddCookie("Supabase", options =>
     {
         options.LoginPath = "/";
+    })
+    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(ApiKeyAuthenticationOptions.DefaultScheme, null);
+
+builder.Services.AddAuthorization(options =>
+{
+    // Add a policy that requires the ApiKey scheme
+    options.AddPolicy("ApiKeyPolicy", policy =>
+    {
+        policy.AddAuthenticationSchemes(ApiKeyAuthenticationOptions.DefaultScheme);
+        policy.RequireAuthenticatedUser();
     });
+});
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddAuthorization();
 // Configure Supabase Client
 var supabaseUrl = Environment.GetEnvironmentVariable("SUPABASE_URL") ?? "";
 var supabaseKey = Environment.GetEnvironmentVariable("SUPABASE_ANON_KEY") ?? "";
