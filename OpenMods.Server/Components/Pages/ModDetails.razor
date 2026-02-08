@@ -168,13 +168,18 @@ else
                                     </div>
                                     
                                     <div id="gallery-carousel" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory select-none">
+                                        @{
+                                            int index = 0;
+                                        }
                                         @foreach (var url in _mod.GalleryImageUrls)
                                         {
+                                            var currentIndex = index++;
                                             <div class="shrink-0 w-full md:w-[calc(50%-8px)] aspect-video rounded-2xl overflow-hidden border border-border-dark shadow-2xl snap-start relative group/img cursor-zoom-in"
-                                                 @ondblclick="() => _fullscreenImageUrl = url">
+                                                 @onclick="() => _fullscreenImageIndex = currentIndex">
                                                 <img src="@url" class="w-full h-full object-cover pointer-events-none" alt="Gallery image" />
-                                                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                                                    <button @onclick="() => _fullscreenImageUrl = url" class="p-3 bg-white/10 backdrop-blur-md rounded-full text-white border border-white/20 hover:bg-primary transition-all scale-90 group-hover/img:scale-100 duration-300">
+                                                <div class="absolute inset-0 bg-black/10 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                                    <button @onclick="() => _fullscreenImageIndex = currentIndex" @onclick:stopPropagation
+                                                            class="absolute bottom-4 right-4 size-12 flex items-center justify-center bg-white/10 backdrop-blur-md rounded-xl text-white border border-white/20 hover:bg-primary transition-all scale-90 group-hover/img:scale-100 duration-300 shadow-xl">
                                                         <span class="material-symbols-outlined">zoom_in</span>
                                                     </button>
                                                 </div>
@@ -375,13 +380,36 @@ else
                     OnSaved="LoadMod" />
             }
 
-            @if (_fullscreenImageUrl != null)
+            @if (_fullscreenImageIndex.HasValue && _mod.GalleryImageUrls != null && _fullscreenImageIndex.Value < _mod.GalleryImageUrls.Count)
             {
-                <div class="fixed inset-0 z-[300] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200" @onclick="() => _fullscreenImageUrl = null">
-                    <button class="absolute top-6 right-6 text-white/50 hover:text-white transition-colors" @onclick="() => _fullscreenImageUrl = null">
+                var url = _mod.GalleryImageUrls[_fullscreenImageIndex.Value];
+                <div class="fixed inset-0 z-[300] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200 outline-none" 
+                     @onclick="() => _fullscreenImageIndex = null"
+                     @onkeydown="HandleFullscreenKeyDown"
+                     tabindex="0"
+                     id="fullscreen-overlay">
+                    
+                    <button class="absolute left-6 top-1/2 -translate-y-1/2 size-16 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-primary border border-white/10 text-white transition-all z-10 group"
+                            @onclick="() => NavigateFullscreen(-1)" @onclick:stopPropagation>
+                        <span class="material-symbols-outlined text-4xl group-hover:scale-110 transition-transform">chevron_left</span>
+                    </button>
+                    
+                    <button class="absolute right-6 top-1/2 -translate-y-1/2 size-16 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-primary border border-white/10 text-white transition-all z-10 group"
+                            @onclick="() => NavigateFullscreen(1)" @onclick:stopPropagation>
+                        <span class="material-symbols-outlined text-4xl group-hover:scale-110 transition-transform">chevron_right</span>
+                    </button>
+
+                    <button class="absolute top-6 right-6 text-white/50 hover:text-white transition-colors z-20" @onclick="() => _fullscreenImageIndex = null">
                         <span class="material-symbols-outlined text-4xl">close</span>
                     </button>
-                    <img src="@_fullscreenImageUrl" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in duration-300" @onclick:stopPropagation />
+
+                    <img src="@url" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in duration-300 select-none" @onclick:stopPropagation />
+                    
+                    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-white/5 border border-white/10 rounded-full text-white/90 text-sm font-black backdrop-blur-md flex items-center gap-3">
+                        <span class="text-primary">@(_fullscreenImageIndex.Value + 1)</span>
+                        <span class="w-px h-3 bg-white/20"></span>
+                        <span class="text-white/40">@(_mod.GalleryImageUrls.Count)</span>
+                    </div>
                 </div>
             }
 
@@ -395,7 +423,7 @@ else
     private int? _expandedVersionId;
     private bool _isRefreshing = false;
     private bool _showGalleryModal = false;
-    private string? _fullscreenImageUrl;
+    private int? _fullscreenImageIndex;
 
     private string FormatFileSize(long bytes)
     {
@@ -420,6 +448,11 @@ else
         if (firstRender)
         {
             await JS.InvokeVoidAsync("initDragScroll", "gallery-carousel");
+        }
+
+        if (_fullscreenImageIndex.HasValue)
+        {
+            await JS.InvokeVoidAsync("focusElement", "fullscreen-overlay");
         }
     }
 
@@ -624,5 +657,21 @@ else
     private async Task ScrollGallery(int direction)
     {
         await JS.InvokeVoidAsync("scrollGallery", "gallery-carousel", direction);
+    }
+
+    private void NavigateFullscreen(int direction)
+    {
+        if (_mod?.GalleryImageUrls == null || !_fullscreenImageIndex.HasValue) return;
+        
+        int count = _mod.GalleryImageUrls.Count;
+        _fullscreenImageIndex = (_fullscreenImageIndex.Value + direction + count) % count;
+        StateHasChanged();
+    }
+
+    private void HandleFullscreenKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "ArrowLeft") NavigateFullscreen(-1);
+        else if (e.Key == "ArrowRight") NavigateFullscreen(1);
+        else if (e.Key == "Escape") _fullscreenImageIndex = null;
     }
 }

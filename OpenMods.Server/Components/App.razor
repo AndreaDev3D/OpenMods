@@ -127,6 +127,11 @@
             
             slider.style.cursor = 'grab';
         };
+
+        window.focusElement = (elementId) => {
+            const el = document.getElementById(elementId);
+            if (el) el.focus();
+        };
     </script>
     <style type="text/tailwindcss">
         .scrollbar-hide::-webkit-scrollbar {
