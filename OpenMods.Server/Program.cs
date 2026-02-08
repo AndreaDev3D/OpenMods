@@ -61,6 +61,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddHttpClient<GitHubService>();
 builder.Services.AddScoped<ModService>();
 builder.Services.AddScoped<ApiKeyService>();
+builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<AuthenticationStateProvider, SupabaseAuthStateProvider>();
 builder.Services.AddAuthentication(options =>
     {
@@ -93,7 +94,8 @@ builder.Services.AddScoped(provider => new Supabase.Client(supabaseUrl, supabase
 }));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING")));
+    options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();

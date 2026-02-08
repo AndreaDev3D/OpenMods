@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Game> Games => Set<Game>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<DailyMetric> DailyMetrics => Set<DailyMetric>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -39,6 +40,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Release>()
             .HasMany(r => r.SupportedGames)
             .WithMany(g => g.Releases);
+
+        modelBuilder.Entity<Mod>()
+            .HasMany(m => m.DailyMetrics)
+            .WithOne(dm => dm.Mod)
+            .HasForeignKey(dm => dm.ModId);
 
         modelBuilder.Entity<Mod>()
             .HasMany(m => m.SupportedGames)

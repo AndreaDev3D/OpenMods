@@ -29,6 +29,9 @@ public class Mod
 
     public int Stars { get; set; }
     public int Views { get; set; }
+    public int Downloads { get; set; }
+
+    public List<DailyMetric> DailyMetrics { get; set; } = new();
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

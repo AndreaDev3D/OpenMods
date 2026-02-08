@@ -11,18 +11,28 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<div class="p-8 max-w-5xl mx-auto space-y-8">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight">API Management</h1>
-            <p class="text-slate-500 mt-2 max-w-2xl">
-                API keys allow developers to interact with the OpenMods API programmatically. Use these keys to automate your mod distribution, fetch analytics, or integrate OpenMods into your custom build pipelines. Keep these keys secret—anyone with access can manage your OpenMods resources.
-            </p>
-        </div>
-        <button @onclick="ShowGenerateModal" class="bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:brightness-110 shadow-lg shadow-primary/20 transition-all shrink-0 self-start md:self-center">
+<header class="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-8 py-4 flex items-center justify-between mb-8">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight">API Management</h1>
+        <p class="text-slate-500 text-xs mt-1">Manage your developer access keys</p>
+    </div>
+    <div class="flex items-center gap-4">
+        <button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-card-dark rounded-full relative transition-colors">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
+        </button>
+        <button @onclick="ShowGenerateModal" class="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:brightness-110 shadow-lg shadow-primary/20 transition-all">
             <span class="material-symbols-outlined text-sm">add</span>
             Generate New Key
         </button>
+    </div>
+</header>
+
+<div class="px-8 pb-8 max-w-7xl mx-auto space-y-8">
+    <div class="bg-slate-50 dark:bg-card-dark/50 p-6 rounded-2xl border border-slate-200 dark:border-border-dark mb-8">
+        <p class="text-sm text-slate-500 leading-relaxed">
+            API keys allow developers to interact with the OpenMods API programmatically. Use these keys to automate your mod distribution, fetch analytics, or integrate OpenMods into your custom build pipelines. Keep these keys secret—anyone with access can manage your OpenMods resources.
+        </p>
     </div>
 
     @if (_apiKeys == null)
