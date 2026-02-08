@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -99,7 +100,33 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "OpenMods API", Version = "v1" });
+    c.AddSecurityDefinition("ApiKey", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "API key needed to access the endpoints. Format: X-API-Key: YOUR_KEY",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Name = "X-API-Key",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "ApiKeyScheme"
+    });
+
+    var scheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Reference = new Microsoft.OpenApi.Models.OpenApiReference
+        {
+            Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+            Id = "ApiKey"
+        },
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header
+    };
+    var requirement = new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        { scheme, new System.Collections.Generic.List<string>() }
+    };
+    c.AddSecurityRequirement(requirement);
+});
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(options => options.DetailedErrors = true);
 
