@@ -267,7 +267,7 @@
         _allMods = await context.Mods
             .Include(m => m.Developer)
             .Include(m => m.Releases)
-                .ThenInclude(r => r.SupportedGames)
+            .Include(m => m.SupportedGames)
             .Include(m => m.Categories)
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync();
@@ -339,7 +339,7 @@
         // 1. Game Filter
         if (_selectedGame != null)
         {
-            query = query.Where(m => m.Releases.Any(r => r.SupportedGames.Any(g => g.Id == _selectedGame.Id)));
+            query = query.Where(m => m.SupportedGames.Any(g => g.Id == _selectedGame.Id));
         }
 
         // 2. Category Filter
