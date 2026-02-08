@@ -1,0 +1,267 @@
+@page "/dashboard/api"
+@layout OpenMods.Server.Components.Layout.DashboardLayout
+@using OpenMods.Shared.Models
+@using OpenMods.Shared.Services
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+@inject ApiKeyService ApiKeyService
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="p-8 max-w-5xl mx-auto space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">API Management</h1>
+            <p class="text-slate-500 mt-2 max-w-2xl">
+                API keys allow developers to interact with the OpenMods API programmatically. Use these keys to automate your mod distribution, fetch analytics, or integrate OpenMods into your custom build pipelines. Keep these keys secret—anyone with access can manage your OpenMods resources.
+            </p>
+        </div>
+        <button @onclick="ShowGenerateModal" class="bg-primary text-white px-6 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:brightness-110 shadow-lg shadow-primary/20 transition-all shrink-0 self-start md:self-center">
+            <span class="material-symbols-outlined text-sm">add</span>
+            Generate New Key
+        </button>
+    </div>
+
+    @if (_apiKeys == null)
+    {
+        <div class="flex justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+    }
+    else if (!_apiKeys.Any())
+    {
+        <div class="bg-white dark:bg-card-dark rounded-2xl border border-dashed border-slate-200 dark:border-border-dark p-12 text-center">
+            <div class="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-3xl text-slate-400">key</span>
+            </div>
+            <h3 class="text-lg font-bold">No API keys yet</h3>
+            <p class="text-slate-500 text-sm mt-2">Generate your first key to start using the OpenMods API.</p>
+        </div>
+    }
+    else
+    {
+        <div class="bg-white dark:bg-card-dark rounded-2xl border border-slate-200 dark:border-border-dark overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 dark:bg-slate-900/50 text-[10px] uppercase tracking-wider font-bold text-slate-500 border-b border-slate-200 dark:border-border-dark">
+                            <th class="px-6 py-4">Name</th>
+                            <th class="px-6 py-4">Key</th>
+                            <th class="px-6 py-4">Last Used</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+                        @foreach (var key in _apiKeys)
+                        {
+                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors">
+                                <td class="px-6 py-4 text-nowrap">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-primary text-sm">vpn_key</span>
+                                        </div>
+                                        <span class="font-bold text-sm">@key.Name</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs text-slate-500 text-nowrap">
+                                    <div class="flex items-center gap-2">
+                                        <span>@MaskKey(key.Key)</span>
+                                        <button @onclick="() => CopyToClipboard(key.Key)" class="hover:text-primary transition-colors">
+                                            <span class="material-symbols-outlined text-xs">content_copy</span>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-xs text-slate-500 uppercase font-bold tracking-tight text-nowrap">
+                                    @(key.LastUsedAt?.ToString("MMM dd, yyyy") ?? "Never used")
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button @onclick="() => DeleteKey(key.Id)" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                        <span class="material-symbols-outlined text-sm">delete</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <div class="bg-primary/5 border border-primary/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <div class="h-12 w-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">menu_book</span>
+            </div>
+            <div>
+                <h4 class="font-bold">Need help with our API?</h4>
+                <p class="text-sm text-slate-500">Check out the OpenMods API documentation for endpoints, rate limits, and authentication guides.</p>
+            </div>
+        </div>
+        <a href="/swagger" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-border-dark px-6 py-2.5 rounded-lg text-sm font-bold hover:brightness-95 transition-all text-nowrap">
+            View Documentation
+        </a>
+    </div>
+</div>
+
+@if (_showModal)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark rounded-2xl w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 class="text-xl font-bold mb-2">Generate New Key</h3>
+            <p class="text-sm text-slate-500 mb-6">Give your key a descriptive name to help you identify its purpose later.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 ml-1">Key Name</label>
+                    <input @bind="_newKeyName" @bind:event="oninput" 
+                           placeholder="e.g. Production CI/CD"
+                           class="w-full px-4 py-3 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl focus:ring-2 focus:ring-primary text-sm" />
+                </div>
+                
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <p class="text-xs text-red-500 font-bold ml-1">@_error</p>
+                }
+
+                <div class="flex gap-3 pt-2">
+                    <button @onclick="() => _showModal = false" class="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-border-dark font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                        Cancel
+                    </button>
+                    <button @onclick="HandleGenerateKey" disabled="@(string.IsNullOrWhiteSpace(_newKeyName) || _isGenerating)" 
+                            class="flex-1 px-4 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:brightness-110 disabled:opacity-50 transition-all">
+                        @(_isGenerating ? "Generating..." : "Generate Key")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_generatedKey != null)
+{
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-card-dark border border-slate-200 dark:border-border-dark rounded-2xl w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div class="h-12 w-12 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 text-emerald-500">
+                <span class="material-symbols-outlined">verified</span>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Key Generated Successfully</h3>
+            <p class="text-sm text-slate-500 mb-6">Copy this key now. For security reasons, <strong>we cannot show it to you again</strong>.</p>
+            
+            <div class="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-border-dark mb-6">
+                <div class="flex items-center justify-between gap-4">
+                    <span class="text-xs font-mono break-all text-primary font-bold">@_generatedKey</span>
+                    <button @onclick="() => CopyToClipboard(_generatedKey)" class="p-2 text-slate-500 hover:text-primary transition-colors flex-shrink-0">
+                        <span class="material-symbols-outlined text-xs">content_copy</span>
+                    </button>
+                </div>
+            </div>
+
+            <button @onclick="CloseGeneratedModal" class="w-full px-4 py-3 rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white font-bold text-sm hover:opacity-90 transition-all">
+                I've copied the key
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ApiKey>? _apiKeys;
+    private bool _showModal;
+    private bool _isGenerating;
+    private string _newKeyName = "";
+    private string? _generatedKey;
+    private string? _error;
+    private int? _devId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var handle = user.FindFirst("github_handle")?.Value;
+
+        if (string.IsNullOrEmpty(handle))
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        _devId = await ApiKeyService.GetDeveloperIdByHandle(handle);
+        if (_devId == null)
+        {
+            _apiKeys = new List<ApiKey>();
+            return;
+        }
+
+        await LoadKeys();
+    }
+
+    private async Task LoadKeys()
+    {
+        if (_devId.HasValue)
+        {
+            _apiKeys = await ApiKeyService.GetApiKeysForDeveloper(_devId.Value);
+        }
+    }
+
+    private void ShowGenerateModal()
+    {
+        _newKeyName = "";
+        _error = null;
+        _showModal = true;
+    }
+
+    private async Task HandleGenerateKey()
+    {
+        if (string.IsNullOrWhiteSpace(_newKeyName) || !_devId.HasValue) return;
+
+        _isGenerating = true;
+        _error = null;
+
+        var key = await ApiKeyService.GenerateApiKey(_devId.Value, _newKeyName);
+        if (key != null)
+        {
+            _generatedKey = key.Key;
+            _showModal = false;
+            await LoadKeys();
+        }
+        else
+        {
+            _error = "Failed to generate key. Please try again.";
+        }
+
+        _isGenerating = false;
+    }
+
+    private void CloseGeneratedModal()
+    {
+        _generatedKey = null;
+    }
+
+    private async Task DeleteKey(int keyId)
+    {
+        if (!_devId.HasValue) return;
+
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this API key? This will immediately disable any applications using it.");
+        if (confirmed)
+        {
+            var success = await ApiKeyService.DeleteApiKey(_devId.Value, keyId);
+            if (success)
+            {
+                await LoadKeys();
+            }
+        }
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private string MaskKey(string key)
+    {
+        if (key.Length <= 12) return key;
+        return $"{key.Substring(0, 8)}...{key.Substring(key.Length - 4)}";
+    }
+}

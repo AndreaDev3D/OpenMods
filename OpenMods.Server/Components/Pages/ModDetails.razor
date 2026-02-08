@@ -1,14 +1,13 @@
 @page "/mod/{Id:int}"
-@using OpenMods.Server.Models
-@using OpenMods.Server.Data
-@using OpenMods.Server.Services
+@using OpenMods.Shared.Models
+@using OpenMods.Shared.Data
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.JSInterop
 @inject IDbContextFactory<AppDbContext> DbFactory
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @inject IJSRuntime JS
-@inject GitHubService Github
+@inject ModService ModService
 
 <PageTitle>@(_mod?.Name ?? "Loading...") | OpenMods</PageTitle>
 
@@ -462,84 +461,9 @@ else
             _isRefreshing = true;
             StateHasChanged();
 
-            // Use the logic from Dashboard.razor but adapted for this page
-            var uri = new Uri(_mod.GitHubRepoUrl);
-            var fullName = uri.AbsolutePath.TrimStart('/');
-
-            var repoData = await Github.GetRepository(fullName);
-            if (repoData != null)
+            var success = await ModService.RefreshModFromGitHub(_mod.Id);
+            if (success)
             {
-                using var context = await DbFactory.CreateDbContextAsync();
-                var dbMod = await context.Mods.FindAsync(_mod.Id);
-                if (dbMod == null) return;
-
-                dbMod.Stars = repoData.Stars;
-                dbMod.Description = repoData.Description;
-                
-                var readmeHtml = await Github.GetReadmeHtml(fullName);
-                if (!string.IsNullOrEmpty(readmeHtml))
-                {
-                    dbMod.LongDescription = readmeHtml;
-                }
-
-                // Sync Releases
-                var githubReleases = await Github.GetReleases(fullName);
-                if (githubReleases.Any())
-                {
-                    // Get existing releases
-                    var existingReleases = await context.Releases
-                        .Include(r => r.Assets)
-                        .Where(r => r.ModId == _mod.Id)
-                        .ToListAsync();
-
-                    foreach (var ghRelease in githubReleases)
-                    {
-                        var release = existingReleases.FirstOrDefault(r => r.Version == ghRelease.TagName);
-                        if (release == null)
-                        {
-                            release = new Release
-                            {
-                                ModId = _mod.Id,
-                                Version = ghRelease.TagName,
-                                ReleasedAt = ghRelease.PublishedAt,
-                                HtmlUrl = ghRelease.HtmlUrl,
-                            };
-                            context.Releases.Add(release);
-                        }
-                        else
-                        {
-                            release.ReleasedAt = ghRelease.PublishedAt;
-                            release.HtmlUrl = ghRelease.HtmlUrl;
-                        }
-
-                        // Sync Assets
-                        foreach (var ghAsset in ghRelease.Assets)
-                        {
-                            var asset = release.Assets.FirstOrDefault(a => a.Name == ghAsset.Name);
-                            if (asset == null)
-                            {
-                                asset = new ReleaseAsset
-                                {
-                                    Name = ghAsset.Name,
-                                    Size = ghAsset.Size,
-                                    DownloadUrl = ghAsset.BrowserDownloadUrl,
-                                    ContentType = ghAsset.ContentType
-                                };
-                                release.Assets.Add(asset);
-                            }
-                            else
-                            {
-                                asset.Size = ghAsset.Size;
-                                asset.DownloadUrl = ghAsset.BrowserDownloadUrl;
-                                asset.ContentType = ghAsset.ContentType;
-                            }
-                        }
-                    }
-                }
-
-                dbMod.UpdatedAt = DateTime.UtcNow;
-                await context.SaveChangesAsync();
-                
                 // Reload data to update UI
                 await LoadMod();
             }

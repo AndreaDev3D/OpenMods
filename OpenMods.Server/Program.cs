@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.IO;
+using OpenMods.Shared.Services;
 using OpenMods.Server.Services;
 using OpenMods.Server.Components;
-using OpenMods.Server.Data;
+using OpenMods.Shared.Data;
 
 // Load environment variables from .env file
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -57,6 +58,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddHttpClient<GitHubService>();
+builder.Services.AddScoped<ModService>();
+builder.Services.AddScoped<ApiKeyService>();
 builder.Services.AddScoped<AuthenticationStateProvider, SupabaseAuthStateProvider>();
 builder.Services.AddAuthentication("Supabase")
     .AddCookie("Supabase", options =>
@@ -78,6 +81,8 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING")));
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddControllers();
+builder.Services.AddSwaggerGen();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(options => options.DetailedErrors = true);
 
@@ -98,9 +103,13 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 // Enforce HTTPS redirection
 app.UseHttpsRedirection();
 
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
