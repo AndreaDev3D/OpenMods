@@ -1,0 +1,134 @@
+@if (Show)
+{
+    <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div class="bg-white dark:bg-[#131a2b] border border-slate-200 dark:border-slate-700/50 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in duration-200">
+            <!-- Header -->
+            <div class="p-6 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary">collections</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">Manage Gallery</h2>
+                        <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mt-0.5">Gallery Curation</p>
+                    </div>
+                </div>
+                <button @onclick="Close" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+                <!-- Info Box -->
+                <div class="bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700/30 p-4 rounded-xl flex gap-4 items-center">
+                    <div class="h-10 w-10 bg-blue-500/10 rounded-full flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-blue-500">folder_open</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Source Repository Folder</p>
+                        <p class="text-sm font-mono text-primary">/img</p>
+                    </div>
+                    <button @onclick="LoadRepoImages" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:brightness-110 rounded-lg text-xs font-bold flex items-center gap-2 transition-all">
+                        <span class="material-symbols-outlined text-sm">refresh</span>
+                        Refresh Repo
+                    </button>
+                </div>
+
+                <!-- Select Images -->
+                <section>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold flex items-center gap-2">
+                            Select Images
+                            <span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] text-slate-500 font-extrabold">@_repoImages.Count found</span>
+                        </h3>
+                    </div>
+
+                    @if (_loading)
+                    {
+                        <div class="flex justify-center py-12">
+                            <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                        </div>
+                    }
+                    else if (!_repoImages.Any())
+                    {
+                        <div class="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-2xl">
+                            <p class="text-slate-500 text-sm">No images found in /img folder of your repository.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            @foreach (var img in _repoImages)
+                            {
+                                var isSelected = _selectedUrls.Contains(img.DownloadUrl ?? "");
+                                <div @onclick="() => ToggleImage(img.DownloadUrl)" class="group cursor-pointer relative aspect-video rounded-xl overflow-hidden border-2 transition-all @(isSelected ? "border-primary shadow-lg shadow-primary/20" : "border-transparent bg-slate-100 dark:bg-slate-800")">
+                                    <img src="@img.DownloadUrl" class="w-full h-full object-cover @(isSelected ? "" : "opacity-60") group-hover:opacity-100 transition-opacity" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                                        <p class="text-[10px] text-white truncate">@img.Name</p>
+                                    </div>
+                                    @if (isSelected)
+                                    {
+                                        <div class="absolute top-2 right-2 bg-primary text-white rounded-full p-0.5 shadow-lg">
+                                            <span class="material-symbols-outlined text-sm font-bold">check</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </section>
+
+                <!-- Carousel Preview & Reorder -->
+                @if (_selectedUrls.Any())
+                {
+                    <section class="p-6 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-200 dark:border-slate-700/30">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-bold flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">view_carousel</span>
+                                Carousel Preview
+                            </h3>
+                            <div class="flex gap-1">
+                                <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                                <span class="h-1.5 w-1.5 rounded-full bg-primary/30"></span>
+                                <span class="h-1.5 w-1.5 rounded-full bg-primary/30"></span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                            @foreach (var url in _selectedUrls)
+                            {
+                                <div class="relative shrink-0 w-64 aspect-video rounded-xl overflow-hidden shadow-xl border border-white/10 group">
+                                    <img src="@url" class="w-full h-full object-cover" />
+                                    <!-- Simplified Reorder Overlay for better UX in modal -->
+                                    <div class="absolute bottom-2 right-2 flex gap-1">
+                                        <button @onclick="() => MoveLeft(url)" class="h-8 w-8 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-primary transition-all">
+                                            <span class="material-symbols-outlined text-sm">chevron_left</span>
+                                        </button>
+                                        <button @onclick="() => MoveRight(url)" class="h-8 w-8 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-primary transition-all">
+                                            <span class="material-symbols-outlined text-sm">chevron_right</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 border-t border-slate-200 dark:border-slate-700/50 flex justify-end gap-3">
+                <button @onclick="Close" class="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                    Cancel
+                </button>
+                <button @onclick="SaveGallery" disabled="@_saving" class="bg-primary text-white px-8 py-2.5 rounded-xl text-sm font-bold hover:brightness-110 shadow-lg shadow-primary/25 transition-all flex items-center gap-2">
+                    @if (_saving)
+                    {
+                        <div class="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    }
+                    Save Gallery
+                </button>
+            </div>
+        </div>
+    </div>
+}

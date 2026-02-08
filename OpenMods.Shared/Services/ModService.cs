@@ -106,4 +106,24 @@ public class ModService
             return false;
         }
     }
+    public async Task<bool> UpdateModGallery(int modId, List<string> imageUrls)
+    {
+        try
+        {
+            using var context = await _dbFactory.CreateDbContextAsync();
+            var dbMod = await context.Mods.FirstOrDefaultAsync(m => m.Id == modId);
+            if (dbMod == null) return false;
+
+            dbMod.GalleryImageUrls = imageUrls;
+            dbMod.UpdatedAt = DateTime.UtcNow;
+
+            await context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating gallery for mod {ModId}", modId);
+            return false;
+        }
+    }
 }

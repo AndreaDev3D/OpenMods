@@ -82,8 +82,60 @@
                 return false;
             });
         }
+
+        window.scrollGallery = (elementId, direction) => {
+            const el = document.getElementById(elementId);
+            if (el) {
+                const scrollAmount = el.clientWidth * 0.8;
+                el.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+            }
+        };
+
+        window.initDragScroll = (elementId) => {
+            const slider = document.getElementById(elementId);
+            if (!slider) return;
+
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true;
+                slider.classList.add('active');
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+                slider.style.cursor = 'grabbing';
+            });
+
+            slider.addEventListener('mouseleave', () => {
+                isDown = false;
+                slider.style.cursor = 'grab';
+            });
+
+            slider.addEventListener('mouseup', () => {
+                isDown = false;
+                slider.style.cursor = 'grab';
+            });
+
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; // scroll-fast
+                slider.scrollLeft = scrollLeft - walk;
+            });
+            
+            slider.style.cursor = 'grab';
+        };
     </script>
     <style type="text/tailwindcss">
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
         body {
         font-family: 'Space Grotesk', sans-serif;
         }

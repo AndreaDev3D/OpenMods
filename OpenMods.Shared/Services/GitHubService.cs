@@ -139,6 +139,31 @@ public class GitHubService
             return new List<GitHubRelease>();
         }
     }
+
+    public async Task<List<GitHubContent>> GetRepositoryContent(string fullName, string path = "")
+    {
+        if (string.IsNullOrEmpty(fullName)) return new List<GitHubContent>();
+
+        try
+        {
+            var response = await _httpClient.GetAsync($"https://api.github.com/repos/{fullName}/contents/{path.TrimStart('/')}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var items = JsonSerializer.Deserialize<List<GitHubContent>>(content, _jsonOptions);
+                return items ?? new List<GitHubContent>();
+            }
+
+            _logger.LogWarning("Failed to fetch content for {FullName}/{Path}: {StatusCode}", fullName, path, response.StatusCode);
+            return new List<GitHubContent>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching content for {FullName}/{Path}", fullName, path);
+            return new List<GitHubContent>();
+        }
+    }
 }
 
 public class GitHubReadme
@@ -174,4 +199,14 @@ public class GitHubAsset
     
     [JsonPropertyName("content_type")]
     public string ContentType { get; set; } = string.Empty;
+}
+
+public class GitHubContent
+{
+    public string Name { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty; // "file" or "dir"
+    
+    [JsonPropertyName("download_url")]
+    public string? DownloadUrl { get; set; }
 }

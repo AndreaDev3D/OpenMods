@@ -25,6 +25,7 @@ public class Mod
     public List<Category> Categories { get; set; } = new();
 
     public List<string>? Tags { get; set; } = new();
+    public List<string>? GalleryImageUrls { get; set; } = new();
     public List<Game> SupportedGames { get; set; } = new();
 
     public int Stars { get; set; }

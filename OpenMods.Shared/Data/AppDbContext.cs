@@ -9,6 +9,18 @@ public class AppDbContext : DbContext
     {
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            var connStr = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+            if (!string.IsNullOrEmpty(connStr))
+            {
+                optionsBuilder.UseNpgsql(connStr);
+            }
+        }
+    }
+
     public DbSet<Developer> Developers => Set<Developer>();
     public DbSet<Mod> Mods => Set<Mod>();
     public DbSet<Release> Releases => Set<Release>();

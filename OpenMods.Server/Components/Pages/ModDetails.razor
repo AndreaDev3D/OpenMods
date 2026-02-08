@@ -112,6 +112,11 @@ else
                                         <span class="material-symbols-outlined text-[18px]">delete</span>
                                         <span>Delete</span>
                                     </button>
+                                    <button @onclick="() => _showGalleryModal = true"
+                                            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/50 bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-all">
+                                        <span class="material-symbols-outlined text-[18px]">collections</span>
+                                        <span>Manage Gallery</span>
+                                    </button>
                                     <button @onclick="HandleGitHubRefresh" disabled="@_isRefreshing"
                                             class="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/50 bg-primary/10 text-primary text-sm font-bold hover:bg-primary/20 transition-all disabled:opacity-50">
                                         <span class="material-symbols-outlined text-[18px] @(_isRefreshing ? "animate-spin" : "")">@( _isRefreshing ? "sync" : "refresh")</span>
@@ -136,7 +141,42 @@ else
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                        <div class="lg:col-span-8">
+                        <div class="lg:col-span-8 space-y-8">
+                            @if (_mod.GalleryImageUrls != null && _mod.GalleryImageUrls.Any())
+                            {
+                                <section class="relative group">
+                                    <div class="flex items-center justify-between mb-4 px-2">
+                                        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-sm">collections</span>
+                                            Gallery
+                                        </h3>
+                                        <div class="flex gap-2">
+                                            <button @onclick="() => ScrollGallery(-1)" class="p-1.5 rounded-lg border border-border-dark bg-card-dark/50 text-[#92a4c9] hover:text-white hover:border-border-light transition-all">
+                                                <span class="material-symbols-outlined text-sm">chevron_left</span>
+                                            </button>
+                                            <button @onclick="() => ScrollGallery(1)" class="p-1.5 rounded-lg border border-border-dark bg-card-dark/50 text-[#92a4c9] hover:text-white hover:border-border-light transition-all">
+                                                <span class="material-symbols-outlined text-sm">chevron_right</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="gallery-carousel" class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory select-none">
+                                        @foreach (var url in _mod.GalleryImageUrls)
+                                        {
+                                            <div class="shrink-0 w-full md:w-[calc(50%-8px)] aspect-video rounded-2xl overflow-hidden border border-border-dark shadow-2xl snap-start relative group/img cursor-zoom-in"
+                                                 @ondblclick="() => _fullscreenImageUrl = url">
+                                                <img src="@url" class="w-full h-full object-cover pointer-events-none" alt="Gallery image" />
+                                                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <button @onclick="() => _fullscreenImageUrl = url" class="p-3 bg-white/10 backdrop-blur-md rounded-full text-white border border-white/20 hover:bg-primary transition-all scale-90 group-hover/img:scale-100 duration-300">
+                                                        <span class="material-symbols-outlined">zoom_in</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </section>
+                            }
+
                             <div
                                 class="bg-card-dark/30 rounded-xl border border-border-dark p-8 markdown-body font-body text-slate-300">
                                 <div class="flex items-center gap-3 mb-8 text-[#92a4c9] pb-4 border-b border-border-dark font-display">
@@ -320,6 +360,22 @@ else
                         </div>
                     </div>
                 </main>
+
+                <ModGalleryModal 
+                    Show="_showGalleryModal" 
+                    Mod="_mod" 
+                    OnClose="() => _showGalleryModal = false" 
+                    OnSaved="LoadMod" />
+            }
+
+            @if (_fullscreenImageUrl != null)
+            {
+                <div class="fixed inset-0 z-[300] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200" @onclick="() => _fullscreenImageUrl = null">
+                    <button class="absolute top-6 right-6 text-white/50 hover:text-white transition-colors" @onclick="() => _fullscreenImageUrl = null">
+                        <span class="material-symbols-outlined text-4xl">close</span>
+                    </button>
+                    <img src="@_fullscreenImageUrl" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in duration-300" @onclick:stopPropagation />
+                </div>
             }
 
 @code {
@@ -331,6 +387,8 @@ else
     private List<Game>? _allGames;
     private int? _expandedVersionId;
     private bool _isRefreshing = false;
+    private bool _showGalleryModal = false;
+    private string? _fullscreenImageUrl;
 
     private string FormatFileSize(long bytes)
     {
@@ -348,6 +406,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadMod();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initDragScroll", "gallery-carousel");
+        }
     }
 
     private async Task LoadMod()
@@ -531,5 +597,10 @@ else
         if (span.TotalDays > 1) return $"{(int)span.TotalDays} days ago";
         if (span.TotalHours > 1) return $"{(int)span.TotalHours} hours ago";
         return "recently";
+    }
+
+    private async Task ScrollGallery(int direction)
+    {
+        await JS.InvokeVoidAsync("scrollGallery", "gallery-carousel", direction);
     }
 }

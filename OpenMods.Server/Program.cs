@@ -34,15 +34,8 @@ if (!string.IsNullOrEmpty(port) && !builder.Environment.IsDevelopment())
 {
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 }
-else if (!string.IsNullOrEmpty(port))
-{
-    Console.WriteLine($"[DEBUG] Local development detected, ignoring PORT env var: {port} to allow VS launchSettings.json to work.");
-}
 
-// Diagnostic logging for environment
-Console.WriteLine($"[DEBUG] SUPABASE_URL: {Environment.GetEnvironmentVariable("SUPABASE_URL")}");
-Console.WriteLine($"[DEBUG] APP_URL: {Environment.GetEnvironmentVariable("APP_URL")}");
-if (!string.IsNullOrEmpty(port)) Console.WriteLine($"[DEBUG] PORT OVERRIDE: {port}");
+var connStr = Environment.GetEnvironmentVariable("CONNECTION_STRING");
 
 // Add services to the container.
 builder.Services.AddDataProtection()
@@ -95,7 +88,7 @@ builder.Services.AddScoped(provider => new Supabase.Client(supabaseUrl, supabase
 }));
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"),
+    options.UseNpgsql(connStr,
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
 
 builder.Services.AddHttpContextAccessor();
