@@ -60,6 +60,11 @@
                     <span class="material-symbols-outlined text-lg">link</span>
                     Mod Links (LINKS.md)
                 </button>
+                <button @onclick='() => ScrollTo("faq")'
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
+                    <span class="material-symbols-outlined text-lg">quiz</span>
+                    Mod FAQs (FAQ.md)
+                </button>
             </nav>
         </div>
 
@@ -247,6 +252,27 @@
                                 If you don't provide an icon, OpenMods automatically assigns icons for common labels like "Website", "Discord", "Support", and "GitHub".
                             </p>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <h2 id="faq" class="text-2xl font-bold text-white mb-6 font-display">Mod FAQs (FAQ.md)</h2>
+            <p class="mb-4">
+                Keep your community informed by adding an <code>FAQ.md</code> file to your repository. OpenMods renders these as an interactive accordion section.
+            </p>
+            <div class="space-y-4 mb-12 not-prose">
+                <div class="p-6 bg-card-dark border border-border-dark rounded-2xl">
+                    <h4 class="text-white font-bold mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">contact_support</span>
+                        Structure
+                    </h4>
+                    <p class="text-slate-400 text-sm mb-4">Each question must start with a <code>###</code> header. The content following the header until the next <code>###</code> is treated as the answer.</p>
+                    
+                    <div class="bg-black/60 rounded p-4 font-mono text-xs text-slate-300 border border-white/5">
+                        ### How do I install this mod?<br/>
+                        Download the latest release and place the folder in your game's plugin directory.<br/><br/>
+                        ### Is this compatible with multiplayer?<br/>
+                        Yes, this mod is fully compatible with multiplayer sessions!
                     </div>
                 </div>
             </div>

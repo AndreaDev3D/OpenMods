@@ -30,6 +30,7 @@ public class AppDbContext : DbContext
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<DailyMetric> DailyMetrics => Set<DailyMetric>();
     public DbSet<ModLink> ModLinks => Set<ModLink>();
+    public DbSet<ModFaq> ModFaqs => Set<ModFaq>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

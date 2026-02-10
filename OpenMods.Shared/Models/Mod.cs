@@ -40,6 +40,7 @@ public class Mod
     public bool IsArchived { get; set; } = false;
 
     public List<ModLink> ExternalLinks { get; set; } = new();
+    public List<ModFaq> Faqs { get; set; } = new();
 }
 
 

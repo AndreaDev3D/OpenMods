@@ -119,6 +119,24 @@ public class ModService
                     }
                 }
 
+                // Sync FAQ.md
+                var faqContent = await _githubService.GetRawFileContent(fullName, "FAQ.md")
+                               ?? await _githubService.GetRawFileContent(fullName, "faq.md");
+
+                if (!string.IsNullOrEmpty(faqContent))
+                {
+                    var faqs = ParseFaqs(faqContent, dbMod.Id);
+                    if (faqs.Any())
+                    {
+                        // Remove old FAQs
+                        var oldFaqs = await context.ModFaqs.Where(f => f.ModId == dbMod.Id).ToListAsync();
+                        context.ModFaqs.RemoveRange(oldFaqs);
+
+                        // Add new FAQs
+                        context.ModFaqs.AddRange(faqs);
+                    }
+                }
+
                 dbMod.UpdatedAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
                 return true;
@@ -172,6 +190,7 @@ public class ModService
             return false;
         }
     }
+
     private List<ModLink> ParseLinks(string content, int modId)
     {
         var links = new List<ModLink>();
@@ -194,5 +213,31 @@ public class ModService
         }
         
         return links;
+    }
+
+    private List<ModFaq> ParseFaqs(string content, int modId)
+    {
+        var faqs = new List<ModFaq>();
+        // Match ### followed by question, then any content (answer) until next ### or end of string
+        var regex = new System.Text.RegularExpressions.Regex(@"(?m)^###\s*(.+?)\s*\n(.*?)(?=\n^###|$)", System.Text.RegularExpressions.RegexOptions.Singleline);
+        var matches = regex.Matches(content);
+
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            var question = match.Groups[1].Value.Trim();
+            var answer = match.Groups[2].Value.Trim();
+
+            if (!string.IsNullOrEmpty(question) && !string.IsNullOrEmpty(answer))
+            {
+                faqs.Add(new ModFaq
+                {
+                    ModId = modId,
+                    Question = question,
+                    Answer = answer
+                });
+            }
+        }
+
+        return faqs;
     }
 }
