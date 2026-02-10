@@ -43,7 +43,7 @@ namespace OpenMods.Server.Components.Pages
                     return;
                 }
                 var uri = new Uri(Mod.GitHubRepoUrl);
-                var fullName = uri.AbsolutePath.TrimStart('/');
+                var fullName = uri.AbsolutePath.TrimStart('/').TrimEnd('/');
                 
                 var content = await GitHubService.GetRepositoryContent(fullName, "img");
                 _repoImages = content

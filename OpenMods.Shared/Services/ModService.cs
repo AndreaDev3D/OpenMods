@@ -31,7 +31,7 @@ public class ModService
             if (dbMod == null) return false;
 
             var uri = new Uri(dbMod.GitHubRepoUrl);
-            var fullName = uri.AbsolutePath.TrimStart('/');
+            var fullName = uri.AbsolutePath.TrimStart('/').TrimEnd('/');
 
             var repoData = await _githubService.GetRepository(fullName);
             if (repoData != null)

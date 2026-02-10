@@ -312,7 +312,7 @@
 
         // Parse owner/repo from URL
         var uri = new Uri(mod.GitHubRepoUrl);
-        var fullName = uri.AbsolutePath.TrimStart('/'); // e.g., "AndreaDev3D/OpenModsDemoMod1"
+        var fullName = uri.AbsolutePath.TrimStart('/').TrimEnd('/'); // e.g., "AndreaDev3D/OpenModsDemoMod1"
         
         var repoData = await Github.GetRepository(fullName);
         if (repoData != null)
