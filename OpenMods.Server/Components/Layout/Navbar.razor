@@ -104,7 +104,8 @@
 Supabase.Gotrue.SignInOptions
             {
                 RedirectTo = callbackUrl,
-                FlowType = Supabase.Gotrue.Constants.OAuthFlowType.PKCE
+                FlowType = Supabase.Gotrue.Constants.OAuthFlowType.PKCE,
+                QueryParams = new Dictionary<string, string> { { "prompt", "select_account" } }
             });
             
             if (result.Uri != null)

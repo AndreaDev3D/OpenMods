@@ -138,7 +138,8 @@
         var result = await SupabaseClient.Auth.SignIn(Supabase.Gotrue.Constants.Provider.Github, new Supabase.Gotrue.SignInOptions
         {
             RedirectTo = Nav.BaseUri + "auth/callback",
-            FlowType = Supabase.Gotrue.Constants.OAuthFlowType.PKCE
+            FlowType = Supabase.Gotrue.Constants.OAuthFlowType.PKCE,
+            QueryParams = new Dictionary<string, string> { { "prompt", "select_account" } }
         });
         
         if (result.Uri != null)
