@@ -29,6 +29,7 @@ public class AppDbContext : DbContext
     public DbSet<Game> Games => Set<Game>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<DailyMetric> DailyMetrics => Set<DailyMetric>();
+    public DbSet<ModLink> ModLinks => Set<ModLink>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,6 +62,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Mod>()
             .HasMany(m => m.SupportedGames)
             .WithMany(g => g.Mods);
+
+        modelBuilder.Entity<Mod>()
+            .HasMany(m => m.ExternalLinks)
+            .WithOne()
+            .HasForeignKey(l => l.ModId);
 
         modelBuilder.Entity<Game>().HasData(
             new Game { Id = 1, Name = "Aether Protocol", ImageUrl = "https://images.unsplash.com/photo-1582125032515-3850559e3549?auto=format&fit=crop&q=80&w=800", Description = "Sci-fi Sandbox" },

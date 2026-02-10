@@ -30,6 +30,12 @@ public class ModService
 
             if (dbMod == null) return false;
 
+            if (string.IsNullOrEmpty(dbMod.GitHubRepoUrl))
+            {
+                _logger.LogWarning("Mod {ModId} has no GitHub URL", modId);
+                return false;
+            }
+
             var uri = new Uri(dbMod.GitHubRepoUrl);
             var fullName = uri.AbsolutePath.TrimStart('/').TrimEnd('/');
 
@@ -94,6 +100,25 @@ public class ModService
                     }
                 }
 
+                // Sync LINKS.md
+                var linksContent = await _githubService.GetRawFileContent(fullName, "LINKS.md") 
+                                 ?? await _githubService.GetRawFileContent(fullName, "LINK.md")
+                                 ?? await _githubService.GetRawFileContent(fullName, "links.md");
+                
+                if (!string.IsNullOrEmpty(linksContent))
+                {
+                    var links = ParseLinks(linksContent, dbMod.Id);
+                    if (links.Any())
+                    {
+                        // Remove old links
+                        var oldLinks = await context.ModLinks.Where(l => l.ModId == dbMod.Id).ToListAsync();
+                        context.ModLinks.RemoveRange(oldLinks);
+                        
+                        // Add new links
+                        context.ModLinks.AddRange(links);
+                    }
+                }
+
                 dbMod.UpdatedAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
                 return true;
@@ -146,5 +171,28 @@ public class ModService
             _logger.LogError(ex, "Error updating thumbnail for mod {ModId}", modId);
             return false;
         }
+    }
+    private List<ModLink> ParseLinks(string content, int modId)
+    {
+        var links = new List<ModLink>();
+        var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+        
+        foreach (var line in lines)
+        {
+            // Support: [icon:name] [Label](Url) or just [Label](Url)
+            var match = System.Text.RegularExpressions.Regex.Match(line, @"(?:\[icon:([^\]]+)\]\s*)?\[([^\]]+)\]\(([^)]+)\)");
+            if (match.Success)
+            {
+                links.Add(new ModLink
+                {
+                    ModId = modId,
+                    Icon = match.Groups[1].Success ? match.Groups[1].Value.Trim() : null,
+                    Label = match.Groups[2].Value.Trim(),
+                    Url = match.Groups[3].Value.Trim()
+                });
+            }
+        }
+        
+        return links;
     }
 }

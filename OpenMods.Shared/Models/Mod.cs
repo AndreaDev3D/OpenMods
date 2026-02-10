@@ -38,6 +38,8 @@ public class Mod
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public bool IsArchived { get; set; } = false;
+
+    public List<ModLink> ExternalLinks { get; set; } = new();
 }
 
 

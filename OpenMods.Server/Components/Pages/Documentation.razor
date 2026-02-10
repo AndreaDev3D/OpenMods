@@ -55,6 +55,11 @@
                     <span class="material-symbols-outlined text-lg">webhook</span>
                     Webhooks
                 </button>
+                <button @onclick='() => ScrollTo("modlinks")'
+                        class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition-all text-sm font-medium">
+                    <span class="material-symbols-outlined text-lg">link</span>
+                    Mod Links (LINKS.md)
+                </button>
             </nav>
         </div>
 
@@ -213,7 +218,40 @@
                 </div>
             </div>
 
-                        <h2 id="api" class="text-2xl font-bold text-white mb-6 font-display">API Reference</h2>
+                        <h2 id="modlinks" class="text-2xl font-bold text-white mb-6 font-display">Mod Links (LINKS.md)</h2>
+            <p class="mb-4">
+                OpenMods supports a specialized <code>LINKS.md</code> file in your mod's repository. Use this to display external links (Discord, Website, Support, etc.) in a styled sidebar section on your mod page.
+            </p>
+            <div class="space-y-4 mb-12 not-prose">
+                <div class="p-6 bg-card-dark border border-border-dark rounded-2xl">
+                    <h4 class="text-white font-bold mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">edit_note</span>
+                        Setup & Syntax
+                    </h4>
+                    <p class="text-slate-400 text-sm mb-4">Create a file named <code>LINKS.md</code> in the root of your repository using standard markdown list syntax.</p>
+                    
+                    <div class="bg-black/60 rounded p-4 font-mono text-xs text-slate-300 border border-white/5 mb-6">
+                        <span class="text-slate-500">// Basic syntax</span><br/>
+                        - [Website](https://example.com)<br/>
+                        - [Discord](https://discord.gg/yourserver)<br/><br/>
+                        <span class="text-slate-500">// With custom icons (Material Symbols or Emojis)</span><br/>
+                        - [icon:language] [Website](https://openmods.net)<br/>
+                        - [icon:🎮] [Support](https://ko-fi.com/developer)
+                    </div>
+
+                    <div class="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                        <span class="material-symbols-outlined text-primary text-xl">info</span>
+                        <div>
+                            <p class="text-xs text-slate-300 font-bold mb-1">Smart Defaults</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                If you don't provide an icon, OpenMods automatically assigns icons for common labels like "Website", "Discord", "Support", and "GitHub".
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h2 id="api" class="text-2xl font-bold text-white mb-6 font-display">API Reference</h2>
                         <p class="mb-4">
                             Integrate OpenMods directly into your application using our REST API. We provide comprehensive documentation
                             via Swagger, allowing you to explore endpoints and test requests in real-time.

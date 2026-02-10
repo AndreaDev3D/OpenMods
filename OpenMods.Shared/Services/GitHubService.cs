@@ -164,6 +164,34 @@ public class GitHubService
             return new List<GitHubContent>();
         }
     }
+    public async Task<string?> GetRawFileContent(string fullName, string path)
+    {
+        if (string.IsNullOrEmpty(fullName) || string.IsNullOrEmpty(path)) return null;
+
+        try
+        {
+            var response = await _httpClient.GetAsync($"https://api.github.com/repos/{fullName}/contents/{path.TrimStart('/')}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var fileData = JsonSerializer.Deserialize<GitHubReadme>(content, _jsonOptions);
+
+                if (fileData != null && !string.IsNullOrEmpty(fileData.Content))
+                {
+                    var base64 = fileData.Content.Replace("\n", "").Replace("\r", "");
+                    return Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+                }
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching raw file content for {FullName}/{Path}", fullName, path);
+            return null;
+        }
+    }
 }
 
 public class GitHubReadme

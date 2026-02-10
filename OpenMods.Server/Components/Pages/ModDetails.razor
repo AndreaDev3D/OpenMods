@@ -273,89 +273,136 @@ else
                         </div>
                     </div>
 
-                            <div class="bg-card-dark border border-border-dark rounded-xl p-6">
-                        <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9] mb-4">Project Metadata</h3>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
-                                <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
-                                    <span class="material-symbols-outlined text-sm">star</span>
-                                    <span class="text-xs font-medium">Downloads</span>
+                        <div class="bg-card-dark border border-border-dark rounded-xl p-6">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9] mb-4">Project Metadata</h3>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
+                                    <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
+                                        <span class="material-symbols-outlined text-sm">star</span>
+                                        <span class="text-xs font-medium">Downloads</span>
+                                    </div>
+                                    <p class="text-lg font-bold">@FormatCount(TotalDownloads)</p>
                                 </div>
-                                <p class="text-lg font-bold">@FormatCount(TotalDownloads)</p>
-                            </div>
-                            <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
-                                <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
-                                    <span class="material-symbols-outlined text-sm">visibility</span>
-                                    <span class="text-xs font-medium">Views</span>
+                                <div class="bg-background-dark p-3 rounded-lg border border-border-dark/50">
+                                    <div class="flex items-center gap-2 text-[#92a4c9] mb-1">
+                                        <span class="material-symbols-outlined text-sm">visibility</span>
+                                        <span class="text-xs font-medium">Views</span>
+                                    </div>
+                                    <p class="text-lg font-bold">@FormatCount(_mod.Views)</p>
                                 </div>
-                                <p class="text-lg font-bold">@FormatCount(_mod.Views)</p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <h4 class="text-[10px] font-bold uppercase tracking-widest text-[#4a5568]">Supported Games</h4>
-                                @if (_isOwner || _isAdmin)
-                                {
-                                    <button @onclick="() => _isEditingGames = !_isEditingGames" 
-                                            class="text-[10px] font-bold text-primary hover:underline">
-                                        @(_isEditingGames ? "Cancel" : "Edit")
-                                    </button>
-                                }
                             </div>
 
-                            @if (_isEditingGames && _allGames != null)
-                            {
-                                <div class="grid grid-cols-2 gap-2 bg-[#1a1e2b] p-3 rounded-lg border border-[#232a3b]">
-                                    @foreach (var game in _allGames)
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-[10px] font-bold uppercase tracking-widest text-[#4a5568]">Supported Games</h4>
+                                    @if (_isOwner || _isAdmin)
                                     {
-                                        bool isSupported = _mod.SupportedGames.Any(g => g.Id == game.Id);
-                                        
-                                        <button @onclick="() => ToggleGameSupport(game)" 
-                                                class="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/5 transition-colors text-left">
-                                            <div class="size-4 rounded border @(isSupported ? "bg-primary border-primary flex items-center justify-center" : "border-[#232a3b]")">
-                                                @if (isSupported)
-                                                { <span class="material-symbols-outlined text-white text-[12px] font-bold">check</span> }
-                                            </div>
-                                            <span class="text-[11px] font-medium @(isSupported ? "text-white" : "text-[#4a5568]")">@game.Name</span>
+                                        <button @onclick="() => _isEditingGames = !_isEditingGames" 
+                                                class="text-[10px] font-bold text-primary hover:underline">
+                                            @(_isEditingGames ? "Cancel" : "Edit")
                                         </button>
                                     }
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="flex flex-col gap-3">
-                                    @if (_mod.SupportedGames.Any())
-                                    {
-                                        @foreach (var game in _mod.SupportedGames)
+
+                                @if (_isEditingGames && _allGames != null)
+                                {
+                                    <div class="grid grid-cols-2 gap-2 bg-[#1a1e2b] p-3 rounded-lg border border-[#232a3b]">
+                                        @foreach (var game in _allGames)
                                         {
-                                            <a href="/explore?gameId=@game.Id" class="group relative flex items-center gap-4 bg-[#1a1e2b] border border-[#232a3b] hover:border-primary/50 p-2 rounded-xl transition-all overflow-hidden">
-                                                <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                <div class="relative size-12 rounded-lg overflow-hidden border border-white/10 shrink-0">
-                                                    <img src="@game.ImageUrl" class="size-full object-cover transition-transform duration-500 group-hover:scale-110" alt="@game.Name" />
+                                            bool isSupported = _mod.SupportedGames.Any(g => g.Id == game.Id);
+                                            
+                                            <button @onclick="() => ToggleGameSupport(game)" 
+                                                    class="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/5 transition-colors text-left">
+                                                <div class="size-4 rounded border @(isSupported ? "bg-primary border-primary flex items-center justify-center" : "border-[#232a3b]")">
+                                                    @if (isSupported)
+                                                    { <span class="material-symbols-outlined text-white text-[12px] font-bold">check</span> }
                                                 </div>
-                                                <div class="relative flex-1 min-w-0">
-                                                    <p class="text-[13px] font-bold text-white truncate group-hover:text-primary transition-colors">@game.Name</p>
-                                                    <div class="flex items-center gap-1.5 mt-0.5">
-                                                        <span class="size-1.5 rounded-full bg-emerald-500"></span>
-                                                        <span class="text-[10px] text-[#92a4c9] font-medium uppercase tracking-wider">Compatible</span>
-                                                    </div>
-                                                </div>
-                                                <span class="material-symbols-outlined text-[#4a5568] group-hover:text-primary transition-colors text-lg pr-1">chevron_right</span>
-                                            </a>
+                                                <span class="text-[11px] font-medium @(isSupported ? "text-white" : "text-[#4a5568]")">@game.Name</span>
+                                            </button>
                                         }
-                                    }
-                                    else
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="flex flex-col gap-3">
+                                        @if (_mod.SupportedGames.Any())
+                                        {
+                                            @foreach (var game in _mod.SupportedGames)
+                                            {
+                                                <a href="/explore?gameId=@game.Id" class="group relative flex items-center gap-4 bg-[#1a1e2b] border border-[#232a3b] hover:border-primary/50 p-2 rounded-xl transition-all overflow-hidden">
+                                                    <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                    <div class="relative size-12 rounded-lg overflow-hidden border border-white/10 shrink-0">
+                                                        <img src="@game.ImageUrl" class="size-full object-cover transition-transform duration-500 group-hover:scale-110" alt="@game.Name" />
+                                                    </div>
+                                                    <div class="relative flex-1 min-w-0">
+                                                        <p class="text-[13px] font-bold text-white truncate group-hover:text-primary transition-colors">@game.Name</p>
+                                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                                            <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                                            <span class="text-[10px] text-[#92a4c9] font-medium uppercase tracking-wider">Compatible</span>
+                                                        </div>
+                                                    </div>
+                                                    <span class="material-symbols-outlined text-[#4a5568] group-hover:text-primary transition-colors text-lg pr-1">chevron_right</span>
+                                                </a>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="flex flex-col items-center justify-center py-8 rounded-xl border border-dashed border-[#232a3b] bg-white/[0.02]">
+                                                <span class="material-symbols-outlined text-[#4a5568] text-3xl mb-2">sports_esports</span>
+                                                <span class="text-xs text-[#4a5568] italic tracking-tight">No platforms specified</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+
+                        @if (_mod.ExternalLinks.Any() || !string.IsNullOrEmpty(_mod.GitHubRepoUrl))
+                        {
+                            <div class="bg-card-dark border border-border-dark rounded-xl p-6">
+                                <h3 class="text-sm font-bold uppercase tracking-wider text-[#92a4c9] mb-4">Links</h3>
+                                <div class="space-y-4">
+                                    @foreach (var link in _mod.ExternalLinks)
                                     {
-                                        <div class="flex flex-col items-center justify-center py-8 rounded-xl border border-dashed border-[#232a3b] bg-white/[0.02]">
-                                            <span class="material-symbols-outlined text-[#4a5568] text-3xl mb-2">sports_esports</span>
-                                            <span class="text-xs text-[#4a5568] italic tracking-tight">No platforms specified</span>
-                                        </div>
+                                        var icon = link.Icon ?? link.Label.ToLower() switch
+                                        {
+                                            "website" => "language",
+                                            "discord" => "forum",
+                                            "support" => "help",
+                                            "github" => "code",
+                                            _ => "link"
+                                        };
+                                        
+                                        <a href="@link.Url" target="_blank" class="flex items-center justify-between group/link">
+                                            <div class="flex items-center gap-3">
+                                                <div class="size-6 flex items-center justify-center shrink-0">
+                                                    @if (System.Text.RegularExpressions.Regex.IsMatch(icon, @"^[a-z0-9_-]+$"))
+                                                    {
+                                                        <span class="material-symbols-outlined text-[20px] text-[#4a5568] group-hover/link:text-primary transition-colors">@icon</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-[16px] leading-none select-none">@icon</span>
+                                                    }
+                                                </div>
+                                                <span class="text-sm font-medium text-slate-300 group-hover/link:text-white transition-colors">@link.Label</span>
+                                            </div>
+                                            <span class="material-symbols-outlined text-[14px] text-[#232a3b] group-hover/link:text-slate-500 transition-colors">open_in_new</span>
+                                        </a>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(_mod.GitHubRepoUrl))
+                                    {
+                                        <a href="@(_mod.GitHubRepoUrl + "/issues")" target="_blank" 
+                                           class="mt-6 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[#232a3b] bg-white/[0.02] hover:bg-white/[0.05] hover:border-[#3a445d] transition-all group/bug">
+                                            <span class="material-symbols-outlined text-[18px] text-[#4a5568] group-hover/bug:text-red-400 transition-colors">bug_report</span>
+                                            <span class="text-xs font-bold text-slate-400 group-hover/bug:text-white transition-colors">Report a Bug</span>
+                                        </a>
                                     }
                                 </div>
-                            }
-                        </div>
-                    </div>
+                            </div>
+                        }
 
                             <div class="bg-card-dark border border-border-dark rounded-xl p-6">
                                 <button @onclick="HandleDownloadLatest"
@@ -464,8 +511,8 @@ else
             .Include(m => m.Developer)
             .Include(m => m.SupportedGames)
             .Include(m => m.Releases)
-            .Include(m => m.Releases)
                 .ThenInclude(r => r.Assets)
+            .Include(m => m.ExternalLinks)
             .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (_mod != null)
