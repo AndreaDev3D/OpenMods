@@ -22,6 +22,20 @@
     </div>
 }
 
+@inject AuthenticationStateProvider AuthStateProvider
+
+@if (_isBanned)
+{
+    <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-8">
+        <div class="bg-card-dark border border-red-500/50 p-8 rounded-2xl max-w-md text-center space-y-4 shadow-2xl">
+            <span class="material-symbols-outlined text-6xl text-red-500">block</span>
+            <h2 class="text-2xl font-bold text-white">Your Account is Banned</h2>
+            <p class="text-slate-400 text-sm">You no longer have access to the developer dashboard or mod management features. Please contact administration if you believe this is a mistake.</p>
+            <button @onclick="HandleLogout" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition-colors">Sign Out</button>
+        </div>
+    </div>
+}
+
 <header
     class="sticky top-0 z-10 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-border-dark px-8 py-4 flex items-center justify-between">
     <div class="flex items-center gap-4 flex-1 max-w-xl">
@@ -47,17 +61,17 @@
             Sync New Repository
         </button>
 
-        <AuthorizeView>
+        <AuthorizeView Context="authContext">
             <Authorized>
                 <div class="relative group flex items-center h-10">
                     <button
                         class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-border-dark cursor-pointer shadow-lg block shrink-0"
-                        style='background-image: url("@(context.User.FindFirst("avatar_url")?.Value ?? "https://lh3.googleusercontent.com/a/default-user")");'></button>
+                        style='background-image: url("@(authContext.User.FindFirst("avatar_url")?.Value ?? "https://lh3.googleusercontent.com/a/default-user")");'></button>
                     <div
                         class="absolute right-0 top-full mt-2 w-48 bg-card-dark border border-border-dark rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden text-left">
                         <div class="p-3 border-b border-border-dark bg-slate-900/50">
                             <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Account</p>
-                            <p class="text-sm font-bold text-white truncate">@(context.User.Identity?.Name)</p>
+                            <p class="text-sm font-bold text-white truncate">@(authContext.User.Identity?.Name)</p>
                         </div>
                         <div class="p-1 text-slate-100">
                              <a href="/dashboard"
@@ -65,11 +79,18 @@
                                 <span class="material-symbols-outlined text-lg">dashboard</span>
                                 <span>Dashboard</span>
                             </a>
-                            <a href="/profile/@(context.User.Identity?.Name)"
+                            <a href="/profile/@(authContext.User.Identity?.Name)"
                                    class="flex items-center gap-2 p-2.5 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors">
                                 <span class="material-symbols-outlined text-lg">person</span>
                                 <span>My Profile</span>
                             </a>
+                            <AuthorizeView Roles="Admin">
+                                <a href="/admin"
+                                       class="flex items-center gap-2 p-2.5 text-sm text-primary hover:bg-primary/10 rounded-lg transition-colors font-bold">
+                                    <span class="material-symbols-outlined text-lg">admin_panel_settings</span>
+                                    <span>Admin Panel</span>
+                                </a>
+                            </AuthorizeView>
                             <button @onclick="HandleLogout"
                                     class="w-full flex items-center gap-2 p-2.5 text-sm text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
                                 <span class="material-symbols-outlined text-lg">logout</span>
@@ -281,9 +302,13 @@
     }
 
     private string? _syncMessage;
+    private bool _isBanned = false;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthState.GetAuthenticationStateAsync();
+        _isBanned = authState.User.HasClaim("is_banned", "true");
+
         await LoadMods();
     }
 

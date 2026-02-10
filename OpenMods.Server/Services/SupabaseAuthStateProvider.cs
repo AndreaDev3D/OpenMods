@@ -10,17 +10,20 @@ public class SupabaseAuthStateProvider : AuthenticationStateProvider, IDisposabl
     private readonly Supabase.Client _supabaseClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly PersistentComponentState _state;
+    private readonly Microsoft.EntityFrameworkCore.IDbContextFactory<OpenMods.Shared.Data.AppDbContext> _dbFactory;
     private readonly PersistingComponentStateSubscription _subscription;
     private bool _initialized = false;
 
     public SupabaseAuthStateProvider(
         Supabase.Client supabaseClient,
         IHttpContextAccessor httpContextAccessor,
-        PersistentComponentState state)
+        PersistentComponentState state,
+        Microsoft.EntityFrameworkCore.IDbContextFactory<OpenMods.Shared.Data.AppDbContext> dbFactory)
     {
         _supabaseClient = supabaseClient;
         _httpContextAccessor = httpContextAccessor;
         _state = state;
+        _dbFactory = dbFactory;
 
         _subscription = _state.RegisterOnPersisting(PersistSession);
 
@@ -116,6 +119,24 @@ public class SupabaseAuthStateProvider : AuthenticationStateProvider, IDisposabl
             new Claim("github_handle", user.UserMetadata?.ContainsKey("user_name") == true ? user.UserMetadata["user_name"].ToString() ?? "" : ""),
             new Claim(ClaimTypes.Name, user.UserMetadata?.ContainsKey("full_name") == true ? user.UserMetadata["full_name"].ToString() ?? "" : user.Email ?? "")
         };
+
+        // Add Role Claim from DB
+        var githubHandle = user.UserMetadata?.ContainsKey("user_name") == true ? user.UserMetadata["user_name"].ToString() : null;
+        if (!string.IsNullOrEmpty(githubHandle))
+        {
+            using var context = await _dbFactory.CreateDbContextAsync();
+            var developer = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+                context.Developers, d => d.GitHubUsername == githubHandle);
+            
+            if (developer != null)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, developer.Role.ToString()));
+                if (developer.IsBanned)
+                {
+                    claims.Add(new Claim("is_banned", "true"));
+                }
+            }
+        }
 
         var identity = new ClaimsIdentity(claims, "Supabase");
         var principal = new ClaimsPrincipal(identity);

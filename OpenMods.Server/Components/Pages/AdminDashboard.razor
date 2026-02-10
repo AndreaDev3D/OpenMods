@@ -1,0 +1,269 @@
+@page "/admin"
+@layout OpenMods.Server.Components.Layout.DashboardLayout
+@using OpenMods.Shared.Data
+@using OpenMods.Shared.Models
+@using OpenMods.Shared.Services
+@using Microsoft.EntityFrameworkCore
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject ModService ModService
+@inject NavigationManager Nav
+
+<div class="p-8 space-y-8">
+    <header class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h1>
+            <p class="text-slate-500">Manage developers, mods, and platform health.</p>
+        </div>
+        <div class="flex gap-4">
+            <div class="bg-card-dark p-4 rounded-xl border border-border-dark flex items-center gap-4">
+                <div class="p-2 bg-primary/10 rounded-lg">
+                    <span class="material-symbols-outlined text-primary">person</span>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 uppercase font-bold">Total Developers</p>
+                    <p class="text-xl font-bold">@_developers.Count</p>
+                </div>
+            </div>
+            <div class="bg-card-dark p-4 rounded-xl border border-border-dark flex items-center gap-4">
+                <div class="p-2 bg-emerald-500/10 rounded-lg">
+                    <span class="material-symbols-outlined text-emerald-500">extension</span>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 uppercase font-bold">Total Mods</p>
+                    <p class="text-xl font-bold">@_mods.Count</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Developers Management -->
+        <section class="bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden">
+            <div class="p-6 border-b border-slate-200 dark:border-border-dark flex items-center justify-between">
+                <h2 class="text-xl font-bold">Developers</h2>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                    <input @bind="_devSearch" @bind:event="oninput" placeholder="Search developers..." 
+                           class="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-1 focus:ring-primary w-64" />
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                        <tr>
+                            <th class="px-6 py-3">Developer</th>
+                            <th class="px-6 py-3">Role</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-border-dark">
+                        @foreach (var dev in FilteredDevelopers)
+                        {
+                            <tr class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        @if (!string.IsNullOrEmpty(dev.AvatarUrl))
+                                        {
+                                            <img src="@dev.AvatarUrl" class="w-8 h-8 rounded-full border border-border-dark" />
+                                        }
+                                        else
+                                        {
+                                            <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-border-dark">
+                                                <span class="material-symbols-outlined text-xs">person</span>
+                                            </div>
+                                        }
+                                        <div>
+                                            <p class="font-bold">@dev.DisplayName</p>
+                                            <p class="text-xs text-slate-500">@@@dev.GitHubUsername</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <select @onchange="(e) => UpdateRole(dev, e.Value?.ToString())" 
+                                            class="bg-transparent border border-slate-700 rounded px-2 py-1 text-xs focus:ring-primary">
+                                        <option value="Developer" selected="@(dev.Role == DeveloperRole.Developer)">Dev</option>
+                                        <option value="Admin" selected="@(dev.Role == DeveloperRole.Admin)">Admin</option>
+                                    </select>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if (dev.IsBanned)
+                                    {
+                                        <span class="inline-flex items-center gap-1 bg-red-500/10 text-red-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Banned</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Active</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button @onclick="() => ToggleBan(dev)" 
+                                            class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors @(dev.IsBanned ? "text-emerald-500" : "text-red-500")"
+                                            title="@(dev.IsBanned ? "Unban" : "Ban")">
+                                        <span class="material-symbols-outlined text-lg">@(dev.IsBanned ? "check_circle" : "block")</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Mods Management -->
+        <section class="bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden">
+            <div class="p-6 border-b border-slate-200 dark:border-border-dark flex items-center justify-between">
+                <h2 class="text-xl font-bold">Mods</h2>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                    <input @bind="_modSearch" @bind:event="oninput" placeholder="Search mods..." 
+                           class="pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-1 focus:ring-primary w-64" />
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                        <tr>
+                            <th class="px-6 py-3">Mod</th>
+                            <th class="px-6 py-3">Owner</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-border-dark">
+                        @foreach (var mod in FilteredMods)
+                        {
+                            <tr class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border border-border-dark shrink-0">
+                                            @if (!string.IsNullOrEmpty(mod.ImageUrl))
+                                            {
+                                                <img src="@mod.ImageUrl" class="w-full h-full object-cover rounded" />
+                                            }
+                                            else
+                                            {
+                                                <span class="material-symbols-outlined text-xs">extension</span>
+                                            }
+                                        </div>
+                                        <div class="truncate max-w-[150px]">
+                                            <p class="font-bold truncate">@mod.Name</p>
+                                            <p class="text-[10px] text-slate-500 font-mono truncate">@mod.GitHubRepoUrl</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-xs">@@@(mod.Developer?.GitHubUsername ?? "Unknown")</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    @if (mod.IsArchived)
+                                    {
+                                        <span class="inline-flex items-center gap-1 bg-slate-500/10 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Archived</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Live</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button @onclick="() => RefreshMod(mod)" 
+                                                class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-primary"
+                                                title="Refresh from GitHub">
+                                            <span class="material-symbols-outlined text-lg">sync</span>
+                                        </button>
+                                        <button @onclick="() => ToggleArchive(mod)" 
+                                                class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors @(mod.IsArchived ? "text-emerald-500" : "text-amber-500")"
+                                                title="@(mod.IsArchived ? "Unarchive" : "Archive")">
+                                            <span class="material-symbols-outlined text-lg">@(mod.IsArchived ? "unarchive" : "archive")</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+@if (_refreshing)
+{
+    <div class="fixed bottom-8 right-8 bg-primary text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-pulse">
+        <span class="material-symbols-outlined animate-spin">sync</span>
+        Syncing with GitHub...
+    </div>
+}
+
+@code {
+    private List<Developer> _developers = new();
+    private List<Mod> _mods = new();
+    private string _devSearch = "";
+    private string _modSearch = "";
+    private bool _refreshing = false;
+
+    private IEnumerable<Developer> FilteredDevelopers => string.IsNullOrWhiteSpace(_devSearch) 
+        ? _developers 
+        : _developers.Where(d => d.GitHubUsername.Contains(_devSearch, StringComparison.OrdinalIgnoreCase) || 
+                               (d.DisplayName?.Contains(_devSearch, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private IEnumerable<Mod> FilteredMods => string.IsNullOrWhiteSpace(_modSearch) 
+        ? _mods 
+        : _mods.Where(m => m.Name.Contains(_modSearch, StringComparison.OrdinalIgnoreCase) || 
+                          m.GitHubRepoUrl.Contains(_modSearch, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        _developers = await context.Developers.OrderBy(d => d.Id).ToListAsync();
+        _mods = await context.Mods.Include(m => m.Developer).OrderByDescending(m => m.UpdatedAt).ToListAsync();
+    }
+
+    private async Task ToggleBan(Developer dev)
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        context.Entry(dev).State = EntityState.Modified;
+        dev.IsBanned = !dev.IsBanned;
+        await context.SaveChangesAsync();
+        await LoadData();
+    }
+
+    private async Task UpdateRole(Developer dev, string? roleName)
+    {
+        if (Enum.TryParse<DeveloperRole>(roleName, out var role))
+        {
+            using var context = await DbFactory.CreateDbContextAsync();
+            context.Entry(dev).Property(d => d.Role).IsModified = true;
+            dev.Role = role;
+            await context.SaveChangesAsync();
+            await LoadData();
+        }
+    }
+
+    private async Task ToggleArchive(Mod mod)
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        context.Entry(mod).Property(m => m.IsArchived).IsModified = true;
+        mod.IsArchived = !mod.IsArchived;
+        await context.SaveChangesAsync();
+        await LoadData();
+    }
+
+    private async Task RefreshMod(Mod mod)
+    {
+        _refreshing = true;
+        StateHasChanged();
+        await ModService.RefreshModFromGitHub(mod.Id);
+        await LoadData();
+        _refreshing = false;
+        StateHasChanged();
+    }
+}

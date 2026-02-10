@@ -51,7 +51,7 @@ else
                     <p class="text-amber-500/70 text-xs">It is hidden from the public Explorer and will no longer receive
                         updates.</p>
                     </div>
-                    @if (_isOwner)
+                    @if (_isOwner || _isAdmin)
                     {
                         <button @onclick="HandleArchive"
                                 class="px-3 py-1 bg-amber-500 text-black text-xs font-bold rounded hover:brightness-110">Restore</button>
@@ -59,12 +59,12 @@ else
                 </div>
             }
 
-        @if (_isOwner)
+        @if (_isOwner || _isAdmin)
         {
             <div class="mb-10 p-2 pl-4 bg-card-dark/40 border border-border-dark rounded-xl flex items-center justify-between backdrop-blur-sm animate-in fade-in slide-in-from-top-4 duration-500">
                 <div class="flex items-center gap-3 text-[#92a4c9]">
                     <span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
-                    <span class="text-xs font-bold uppercase tracking-widest">Developer Management</span>
+                    <span class="text-xs font-bold uppercase tracking-widest">(@(_isAdmin && !_isOwner ? "Admin Management" : "Developer Management"))</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex gap-2 mr-2 pr-2 border-r border-border-dark/50">
@@ -295,7 +295,7 @@ else
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <h4 class="text-[10px] font-bold uppercase tracking-widest text-[#4a5568]">Supported Games</h4>
-                                @if (_isOwner)
+                                @if (_isOwner || _isAdmin)
                                 {
                                     <button @onclick="() => _isEditingGames = !_isEditingGames" 
                                             class="text-[10px] font-bold text-primary hover:underline">
@@ -417,6 +417,7 @@ else
     [Parameter] public int Id { get; set; }
     private Mod? _mod;
     private bool _isOwner = false;
+    private bool _isAdmin = false;
     private bool _isEditingGames = false;
     private bool _isCopied = false;
     private List<Game>? _allGames;
@@ -490,12 +491,13 @@ else
             var githubHandle = user.FindFirst("github_handle")?.Value;
             _isOwner = user.Identity?.IsAuthenticated == true &&
                       githubHandle?.ToLower() == _mod.Developer?.GitHubUsername?.ToLower();
+            _isAdmin = user.IsInRole("Admin");
         }
     }
 
     private async Task ToggleGameSupport(Game game)
     {
-        if (_mod == null || !_isOwner) return;
+        if (_mod == null || (!_isOwner && !_isAdmin)) return;
 
         using var context = await DbFactory.CreateDbContextAsync();
         var dbMod = await context.Mods
@@ -525,7 +527,7 @@ else
 
     private async Task HandleArchive()
     {
-        if (_mod == null || !_isOwner) return;
+        if (_mod == null || (!_isOwner && !_isAdmin)) return;
 
         using var context = await DbFactory.CreateDbContextAsync();
         var mod = await context.Mods.FindAsync(Id);
@@ -539,7 +541,7 @@ else
 
     private async Task HandleDelete()
     {
-        if (_mod == null || !_isOwner) return;
+        if (_mod == null || (!_isOwner && !_isAdmin)) return;
 
         // Simple confirmation via JS (could be a better Modal later)
         bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you absolutely sure you want to delete '{_mod.Name}'? This action cannot be undone.");
@@ -560,7 +562,7 @@ else
 
     private async Task HandleGitHubRefresh()
     {
-        if (_mod == null || !_isOwner || _isRefreshing) return;
+        if (_mod == null || (!_isOwner && !_isAdmin) || _isRefreshing) return;
 
         try
         {
