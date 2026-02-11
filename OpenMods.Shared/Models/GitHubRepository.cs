@@ -27,4 +27,19 @@ public class GitHubRepository
 
     [JsonPropertyName("html_url")]
     public string HtmlUrl { get; set; } = "";
+
+    [JsonPropertyName("owner")]
+    public GitHubOwner Owner { get; set; } = new();
+}
+
+public class GitHubOwner
+{
+    [JsonPropertyName("login")]
+    public string Login { get; set; } = "";
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = ""; // "User" or "Organization"
+
+    [JsonPropertyName("avatar_url")]
+    public string AvatarUrl { get; set; } = "";
 }

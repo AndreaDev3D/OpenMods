@@ -33,22 +33,69 @@ public class GitHubService
 
         try
         {
-            var response = await _httpClient.GetAsync($"https://api.github.com/users/{githubHandle}/repos?type=public&sort=updated");
+            var allRepos = new List<GitHubRepository>();
 
-            if (response.IsSuccessStatusCode)
+            // Fetch user's personal repositories
+            var userReposResponse = await _httpClient.GetAsync($"https://api.github.com/users/{githubHandle}/repos?type=public&sort=updated");
+            if (userReposResponse.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
+                var content = await userReposResponse.Content.ReadAsStringAsync();
                 var repos = JsonSerializer.Deserialize<List<GitHubRepository>>(content, _jsonOptions);
-                return repos ?? new List<GitHubRepository>();
+                if (repos != null) allRepos.AddRange(repos);
             }
 
-            _logger.LogWarning("Failed to fetch repositories for {Handle}: {StatusCode}", githubHandle, response.StatusCode);
-            return new List<GitHubRepository>();
+            // Fetch user's organizations
+            var orgs = await GetUserOrganizations(githubHandle);
+            foreach (var org in orgs)
+            {
+                var orgRepos = await GetOrganizationRepositories(org.Login);
+                allRepos.AddRange(orgRepos);
+            }
+
+            return allRepos.OrderByDescending(r => r.UpdatedAt).ToList();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching repositories for {Handle}", githubHandle);
             return new List<GitHubRepository>();
+        }
+    }
+
+    private async Task<List<GitHubOrganization>> GetUserOrganizations(string githubHandle)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"https://api.github.com/users/{githubHandle}/orgs");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<List<GitHubOrganization>>(content, _jsonOptions) ?? new();
+            }
+            return new();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching organizations for {Handle}", githubHandle);
+            return new();
+        }
+    }
+
+    private async Task<List<GitHubRepository>> GetOrganizationRepositories(string orgName)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"https://api.github.com/orgs/{orgName}/repos?type=public&sort=updated");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<List<GitHubRepository>>(content, _jsonOptions) ?? new();
+            }
+            return new();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching repositories for organization {Org}", orgName);
+            return new();
         }
     }
 
@@ -237,4 +284,10 @@ public class GitHubContent
     
     [JsonPropertyName("download_url")]
     public string? DownloadUrl { get; set; }
+}
+
+public class GitHubOrganization
+{
+    [JsonPropertyName("login")]
+    public string Login { get; set; } = "";
 }
