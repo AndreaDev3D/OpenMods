@@ -13,6 +13,7 @@ public class SupabaseAuthStateProvider : AuthenticationStateProvider, IDisposabl
     private readonly Microsoft.EntityFrameworkCore.IDbContextFactory<OpenMods.Shared.Data.AppDbContext> _dbFactory;
     private readonly PersistingComponentStateSubscription _subscription;
     private bool _initialized = false;
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public SupabaseAuthStateProvider(
         Supabase.Client supabaseClient,
@@ -49,58 +50,79 @@ public class SupabaseAuthStateProvider : AuthenticationStateProvider, IDisposabl
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        // 1. Try to recover from PersistentComponentState (Interactive Circuit)
-        if (!_initialized && _supabaseClient.Auth.CurrentSession == null)
+        await _semaphore.WaitAsync();
+        try
         {
-            if (_state.TryTakeFromJson<SessionData>("supabase_session_data", out var restored))
+            // 1. Try to recover from PersistentComponentState (Interactive Circuit)
+            if (!_initialized && _supabaseClient.Auth.CurrentSession == null)
             {
-                if (restored != null && !string.IsNullOrEmpty(restored.AccessToken))
+                if (_state.TryTakeFromJson<SessionData>("supabase_session_data", out var restored))
+                {
+                    if (restored != null && !string.IsNullOrEmpty(restored.AccessToken))
+                    {
+                        try
+                        {
+                            Console.WriteLine("[DEBUG] AuthState: Found state in PersistentComponentState. Restoring...");
+                            await _supabaseClient.Auth.SetSession(restored.AccessToken, restored.RefreshToken ?? "");
+                            _initialized = true;
+                            Console.WriteLine("[DEBUG] AuthState: Successfully restored session from PersistentComponentState");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[DEBUG] AuthState: Error restoring from state: {ex.Message}");
+                            if (ex.Message.Contains("refresh_token_already_used"))
+                            {
+                                await _supabaseClient.Auth.SignOut();
+                                _initialized = true; // Mark as initialized but signed out
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Fallback to Cookie (Prerendering or first load)
+            if (!_initialized && _supabaseClient.Auth.CurrentSession == null)
+            {
+                var cookieValue = _httpContextAccessor.HttpContext?.Request.Cookies["supabase_session"];
+                if (!string.IsNullOrEmpty(cookieValue))
                 {
                     try
                     {
-                        Console.WriteLine("[DEBUG] AuthState: Found state in PersistentComponentState. Restoring...");
-                        await _supabaseClient.Auth.SetSession(restored.AccessToken, restored.RefreshToken ?? "");
-                        _initialized = true;
-                        Console.WriteLine("[DEBUG] AuthState: Successfully restored session from PersistentComponentState");
+                        // Decode from Base64
+                        var base64Bytes = Convert.FromBase64String(cookieValue);
+                        var sessionJson = System.Text.Encoding.UTF8.GetString(base64Bytes);
+
+                        var sessionData = Newtonsoft.Json.JsonConvert.DeserializeObject<SessionData>(sessionJson);
+                        if (sessionData != null && !string.IsNullOrEmpty(sessionData.AccessToken) && !string.IsNullOrEmpty(sessionData.RefreshToken))
+                        {
+                            Console.WriteLine("[DEBUG] AuthState: Found Base64 session cookie. Restoring...");
+
+                            // Prevent re-entry BEFORE calling SetSession because it triggers an event
+                            _initialized = true;
+                            await _supabaseClient.Auth.SetSession(sessionData.AccessToken, sessionData.RefreshToken);
+
+                            Console.WriteLine("[DEBUG] AuthState: Successfully restored session from Base64 Cookie");
+                        }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[DEBUG] AuthState: Error restoring from state: {ex.Message}");
+                        Console.WriteLine($"[DEBUG] AuthState: Error restoring from cookie: {ex.Message}");
+                        if (ex.Message.Contains("refresh_token_already_used"))
+                        {
+                            await _supabaseClient.Auth.SignOut();
+                            _initialized = true; // Still mark as initialized to stop the loop
+                        }
+                        else
+                        {
+                            _initialized = false; // Reset if it was a transient error
+                        }
                     }
                 }
             }
         }
-
-        // 2. Fallback to Cookie (Prerendering or first load)
-        if (!_initialized && _supabaseClient.Auth.CurrentSession == null)
+        finally
         {
-            var cookieValue = _httpContextAccessor.HttpContext?.Request.Cookies["supabase_session"];
-            if (!string.IsNullOrEmpty(cookieValue))
-            {
-                try
-                {
-                    // Decode from Base64
-                    var base64Bytes = Convert.FromBase64String(cookieValue);
-                    var sessionJson = System.Text.Encoding.UTF8.GetString(base64Bytes);
-
-                    var sessionData = Newtonsoft.Json.JsonConvert.DeserializeObject<SessionData>(sessionJson);
-                    if (sessionData != null && !string.IsNullOrEmpty(sessionData.AccessToken) && !string.IsNullOrEmpty(sessionData.RefreshToken))
-                    {
-                        Console.WriteLine("[DEBUG] AuthState: Found Base64 session cookie. Restoring...");
-
-                        // Prevent re-entry BEFORE calling SetSession because it triggers an event
-                        _initialized = true;
-                        await _supabaseClient.Auth.SetSession(sessionData.AccessToken, sessionData.RefreshToken);
-
-                        Console.WriteLine("[DEBUG] AuthState: Successfully restored session from Base64 Cookie");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[DEBUG] AuthState: Error restoring from cookie: {ex.Message}");
-                    _initialized = false; // Reset if failed
-                }
-            }
+            _semaphore.Release();
         }
 
         var session = _supabaseClient.Auth.CurrentSession;
