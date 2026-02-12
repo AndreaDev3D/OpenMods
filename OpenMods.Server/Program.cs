@@ -28,6 +28,9 @@ else
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Enforce lowercase URLs
+builder.Services.Configure<RouteOptions>(options => options.LowercaseUrls = true);
+
 // Support for Koyeb/Docker dynamic port (Skip in local dev to let VS manage HTTPS)
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port) && !builder.Environment.IsDevelopment())
