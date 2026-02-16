@@ -127,6 +127,13 @@ else
                             <span class="text-sm font-medium">@_mod.GitHubRepoUrl?.Replace("https://", "")</span>
                         </a>
                     </div>
+
+                    @if (!string.IsNullOrEmpty(_mod.Description))
+                    {
+                        <p class="text-[#92a4c9] text-base mt-4 max-w-2xl leading-relaxed">
+                            @_mod.Description
+                        </p>
+                    }
                 </div>
             </div>
 
