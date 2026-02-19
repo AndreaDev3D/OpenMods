@@ -83,6 +83,7 @@ public class GamesController : ControllerBase
                 GitHubRepoUrl = m.GitHubRepoUrl,
                 DeveloperId = m.DeveloperId,
                 DeveloperName = m.Developer != null ? m.Developer.DisplayName ?? m.Developer.GitHubUsername : null,
+                InstallJson = m.InstallJson,
                 Stars = m.Stars,
                 Views = m.Views,
                 Downloads = m.Downloads,

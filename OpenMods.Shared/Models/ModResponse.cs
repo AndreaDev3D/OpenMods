@@ -13,5 +13,6 @@ public class ModResponse
     public int Stars { get; set; }
     public int Views { get; set; }
     public int Downloads { get; set; }
+    public string? InstallJson { get; set; }
     public List<ReleaseResponse> Releases { get; set; } = new();
 }
