@@ -117,4 +117,41 @@ public class GamesController : ControllerBase
 
         return Ok(mod);
     }
+
+    [HttpGet("{gameId}/mods/{modId}/releases/{releaseId}")]
+    public async Task<ActionResult<ReleaseResponse>> GetRelease(int gameId, int modId, int releaseId)
+    {
+        _logger.LogInformation("API request to get release {ReleaseId} for mod {ModId}", releaseId, modId);
+        using var context = await _dbFactory.CreateDbContextAsync();
+
+        var release = await context.Releases
+            .AsNoTracking()
+            .Where(r => r.Id == releaseId && r.ModId == modId && r.Mod.SupportedGames.Any(g => g.Id == gameId))
+            .Select(r => new ReleaseResponse
+            {
+                Id = r.Id,
+                Version = r.Version,
+                DownloadUrl = r.DownloadUrl,
+                HtmlUrl = r.HtmlUrl,
+                Changelog = r.Changelog,
+                ReleasedAt = r.ReleasedAt,
+                Assets = r.Assets.Select(a => new ReleaseAssetResponse
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    Size = a.Size,
+                    DownloadUrl = a.DownloadUrl,
+                    ContentType = a.ContentType,
+                    DownloadCount = a.DownloadCount
+                }).ToList()
+            })
+            .FirstOrDefaultAsync();
+
+        if (release == null)
+        {
+            return NotFound(new { message = "Release not found" });
+        }
+
+        return Ok(release);
+    }
 }
