@@ -38,7 +38,7 @@ else
         <nav class="flex items-center gap-2 mb-8 text-[#92a4c9] text-sm font-display">
             <a class="hover:text-white transition-colors" href="/">OpenMods</a>
             <span class="material-symbols-outlined text-sm">chevron_right</span>
-            <a class="hover:text-white transition-colors" href="explore">Explore</a>
+            <a class="hover:text-white transition-colors" href="mods">Mods</a>
             <span class="material-symbols-outlined text-sm">chevron_right</span>
             <span class="text-white">@_mod.Name</span>
         </nav>
@@ -387,7 +387,7 @@ else
                                         {
                                             @foreach (var game in _mod.SupportedGames)
                                             {
-                                                <a href="/explore?gameId=@game.Id" class="group relative flex items-center gap-4 bg-[#1a1e2b] border border-[#232a3b] hover:border-primary/50 p-2 rounded-xl transition-all overflow-hidden">
+                                                <a href="/mods?gameId=@game.Id" class="group relative flex items-center gap-4 bg-[#1a1e2b] border border-[#232a3b] hover:border-primary/50 p-2 rounded-xl transition-all overflow-hidden">
                                                     <div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                                     <div class="relative size-12 rounded-lg overflow-hidden border border-white/10 shrink-0">
                                                         <img src="@game.ImageUrl" class="size-full object-cover transition-transform duration-500 group-hover:scale-110" alt="@game.Name" />
@@ -672,7 +672,7 @@ else
         {
             context.Mods.Remove(mod);
             await context.SaveChangesAsync();
-            Nav.NavigateTo("/explore");
+            Nav.NavigateTo("/mods");
         }
     }
 
