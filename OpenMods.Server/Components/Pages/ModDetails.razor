@@ -298,16 +298,29 @@ else
                                                 <div class="space-y-1.5 p-2 bg-slate-900/50 rounded-lg border border-white/5">
                                                     @foreach (var asset in release.Assets.Where(a => !a.Name.ToLower().Contains("source code")))
                                                     {
-                                                        <button @onclick="() => HandleDownload(asset)" class="w-full flex items-center justify-between p-2.5 rounded-md hover:bg-white/5 group/asset transition-colors text-left">
+                                                        <div class="w-full flex items-center justify-between p-2.5 rounded-md hover:bg-white/5 group/asset transition-colors text-left">
                                                             <div class="flex items-center gap-3">
                                                                 <span class="material-symbols-outlined text-slate-500 group-hover/asset:text-primary text-[20px]">package_2</span>
-                                                                <span class="text-[13px] font-medium text-slate-300 group-hover/asset:text-white truncate max-w-[180px]">@asset.Name</span>
+                                                                <span class="text-[13px] font-medium text-slate-300 group-hover/asset:text-white truncate max-w-[150px]">@asset.Name</span>
                                                             </div>
-                                                            <div class="flex items-center gap-3">
-                                                                <span class="text-[11px] font-mono text-slate-500 group-hover/asset:text-slate-400">@FormatFileSize(asset.Size)</span>
-                                                                <span class="material-symbols-outlined text-slate-600 group-hover/asset:text-primary text-[18px]">download</span>
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="text-[11px] font-mono text-slate-500 group-hover/asset:text-slate-400 mr-1">@FormatFileSize(asset.Size)</span>
+                                                                <button @onclick="() => HandleDownload(asset)" title="Download file"
+                                                                        class="p-1.5 rounded-md hover:bg-white/10 text-slate-600 hover:text-primary transition-all flex items-center justify-center">
+                                                                    <span class="material-symbols-outlined text-[18px]">download</span>
+                                                                </button>
+                                                                <div class="relative group/tooltip">
+                                                                    <button @onclick="() => HandleInstallDeepLink(release)"
+                                                                            class="p-1.5 rounded-md hover:bg-primary/20 text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center shadow-sm">
+                                                                        <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+                                                                    </button>
+                                                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-2xl border border-white/10 translate-y-1 group-hover/tooltip:translate-y-0 z-50">
+                                                                        Install via OpenModsManager
+                                                                        <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-slate-900"></div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                        </button>
+                                                        </div>
                                                     }
                                                 </div>
                                             </div>
@@ -746,6 +759,20 @@ else
         {
             await JS.InvokeVoidAsync("open", latestRelease.HtmlUrl, "_blank");
         }
+    }
+
+    private async Task HandleInstallDeepLink(Release release)
+    {
+        if (_mod == null) return;
+
+        // Try to get a game ID. Prefer release-specific supported game, then mod-level, fallback to 1
+        var gameId = release.SupportedGames.FirstOrDefault()?.Id 
+                    ?? _mod.SupportedGames.FirstOrDefault()?.Id 
+                    ?? 1;
+
+        var url = $"openmodsmanager://openmods.net/game/{gameId}/mod/{_mod.Id}?release-id={release.Id}";
+        
+        await JS.InvokeVoidAsync("open", url, "_self");
     }
 
     private int TotalDownloads => _mod?.Releases.SelectMany(r => r.Assets).Sum(a => a.DownloadCount) ?? 0;
