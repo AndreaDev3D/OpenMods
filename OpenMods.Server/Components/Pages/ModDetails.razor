@@ -310,7 +310,7 @@ else
                                                                     <span class="material-symbols-outlined text-[18px]">download</span>
                                                                 </button>
                                                                 <div class="relative group/tooltip">
-                                                                    <button @onclick="() => HandleInstallDeepLink(release)"
+                                                                    <button @onclick="() => HandleInstallDeepLink(release, asset)"
                                                                             class="p-1.5 rounded-md hover:bg-primary/20 text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center shadow-sm">
                                                                         <span class="material-symbols-outlined text-[18px]">rocket_launch</span>
                                                                     </button>
@@ -761,7 +761,7 @@ else
         }
     }
 
-    private async Task HandleInstallDeepLink(Release release)
+    private async Task HandleInstallDeepLink(Release release, ReleaseAsset asset)
     {
         if (_mod == null) return;
 
@@ -770,7 +770,7 @@ else
                     ?? _mod.SupportedGames.FirstOrDefault()?.Id 
                     ?? 1;
 
-        var url = $"openmodsmanager://openmods.net/game/{gameId}/mod/{_mod.Id}?release-id={release.Id}";
+        var url = $"openmodsmanager://openmods.net/game/{gameId}/mod/{_mod.Id}?releaseHas={release.Id}&assetId={asset.Id}";
         
         await JS.InvokeVoidAsync("open", url, "_self");
     }
