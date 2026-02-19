@@ -41,6 +41,7 @@ public class Mod
 
     public List<ModLink> ExternalLinks { get; set; } = new();
     public List<ModFaq> Faqs { get; set; } = new();
+    public string? InstallJson { get; set; }
 }
 
 

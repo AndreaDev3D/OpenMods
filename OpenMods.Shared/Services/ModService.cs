@@ -100,10 +100,11 @@ public class ModService
                     }
                 }
 
-                // Sync LINKS.md
-                var linksContent = await _githubService.GetRawFileContent(fullName, "LINKS.md") 
-                                 ?? await _githubService.GetRawFileContent(fullName, "LINK.md")
-                                 ?? await _githubService.GetRawFileContent(fullName, "links.md");
+                // Sync LINKS.md (now in .openmods/)
+                var linksContent = await _githubService.GetRawFileContent(fullName, ".openmods/LINKS.md") 
+                                 ?? await _githubService.GetRawFileContent(fullName, ".openmods/LINK.md")
+                                 ?? await _githubService.GetRawFileContent(fullName, ".openmods/links.md")
+                                 ?? await _githubService.GetRawFileContent(fullName, "LINKS.md");
                 
                 if (!string.IsNullOrEmpty(linksContent))
                 {
@@ -119,9 +120,10 @@ public class ModService
                     }
                 }
 
-                // Sync FAQ.md
-                var faqContent = await _githubService.GetRawFileContent(fullName, "FAQ.md")
-                               ?? await _githubService.GetRawFileContent(fullName, "faq.md");
+                // Sync FAQ.md (now in .openmods/)
+                var faqContent = await _githubService.GetRawFileContent(fullName, ".openmods/FAQ.md")
+                               ?? await _githubService.GetRawFileContent(fullName, ".openmods/faq.md")
+                               ?? await _githubService.GetRawFileContent(fullName, "FAQ.md");
 
                 if (!string.IsNullOrEmpty(faqContent))
                 {
@@ -134,6 +136,46 @@ public class ModService
 
                         // Add new FAQs
                         context.ModFaqs.AddRange(faqs);
+                    }
+                }
+
+                // Sync install.json
+                var installJson = await _githubService.GetRawFileContent(fullName, ".openmods/install.json")
+                                ?? await _githubService.GetRawFileContent(fullName, "install.json");
+                
+                if (!string.IsNullOrEmpty(installJson))
+                {
+                    dbMod.InstallJson = installJson;
+                }
+
+                // Sync Images from .openmods/img/
+                var images = await _githubService.GetRepositoryContent(fullName, ".openmods/img");
+                if (images.Any())
+                {
+                    // Update gallery with all images from the folder if it was empty
+                    if (dbMod.GalleryImageUrls == null || !dbMod.GalleryImageUrls.Any())
+                    {
+                        dbMod.GalleryImageUrls = images
+                            .Where(i => i.Type == "file" && (i.Name.EndsWith(".png") || i.Name.EndsWith(".jpg") || i.Name.EndsWith(".jpeg") || i.Name.EndsWith(".webp")))
+                            .Select(i => i.DownloadUrl)
+                            .Where(url => url != null)
+                            .Cast<string>()
+                            .ToList();
+                    }
+
+                    // Auto-detect thumbnail if not set or if it's currently a default
+                    if (string.IsNullOrEmpty(dbMod.ImageUrl) || dbMod.ImageUrl.Contains("placeholder"))
+                    {
+                        var thumbnail = images.FirstOrDefault(i => 
+                            i.Name.ToLower().Contains("icon") || 
+                            i.Name.ToLower().Contains("logo") || 
+                            i.Name.ToLower().Contains("thumbnail") ||
+                            i.Name.ToLower().Contains("cover"));
+                        
+                        if (thumbnail != null && !string.IsNullOrEmpty(thumbnail.DownloadUrl))
+                        {
+                            dbMod.ImageUrl = thumbnail.DownloadUrl;
+                        }
                     }
                 }
 

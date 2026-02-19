@@ -45,7 +45,7 @@ namespace OpenMods.Server.Components.Pages
                 var uri = new Uri(Mod.GitHubRepoUrl);
                 var fullName = uri.AbsolutePath.TrimStart('/').TrimEnd('/');
                 
-                var content = await GitHubService.GetRepositoryContent(fullName, "img");
+                var content = await GitHubService.GetRepositoryContent(fullName, ".openmods/img");
                 _repoImages = content
                     .Where(c => c.Type == "file" && (c.Name.EndsWith(".png") || c.Name.EndsWith(".jpg") || c.Name.EndsWith(".jpeg") || c.Name.EndsWith(".webp")))
                     .ToList();
